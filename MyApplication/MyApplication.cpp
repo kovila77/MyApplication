@@ -4,14 +4,15 @@
 #include <windowsx.h>
 #include <random>
 #include <fstream>
-//#include <string> // Подключаю стринг
+#include <sstream> // 
+#include <string> // Подключаю стринг
 #define COLOR_ELLIPS RGB(255, 0, 0)
 #define COLOR_RAND RGB(rand() % 255, rand() % 255, rand() % 255)
 #define TYPE_STREAM 1
 #define TYPE_MAPPING 2
+#define LENGTH_WAY_TO_ICON 512
 
-
-const int TYPE_OF_IO = TYPE_STREAM;
+const int TYPE_OF_IO = TYPE_MAPPING;
 const wchar_t* fname = _T("Param.dat");
 
 const int HOTKEY__SHIFT_C__NOTEPAD = 15;
@@ -38,16 +39,16 @@ struct loadData {
 	int szYWND = 240;
 	COLORREF colorBack = RGB(0, 0, 255);
 	COLORREF colorLine = RGB(255, 0, 0);
-	char nameIcon[1024];
+	char nameIcon[LENGTH_WAY_TO_ICON];
 } DataF;
 bool** haveEll;
 
-struct FileMapping {
-	HANDLE hFile;
-	HANDLE hMapping;
-	size_t fsize;
-	unsigned char* dataPtr;
-};
+//struct FileMapping {
+//	HANDLE hFile;
+//	HANDLE hMapping;
+//	size_t fsize;
+//	unsigned char* dataPtr;
+//};
 
 
 bool ReadParamMapping() {
@@ -63,7 +64,7 @@ bool ReadParamMapping() {
 	if (hFile == INVALID_HANDLE_VALUE) {
 		std::cout << "fileMappingCreate - CreateFile failed, fname = "
 			<< fname << std::endl;
-		return NULL;
+		return false;
 	}
 
 	DWORD dwFileSize = GetFileSize(hFile, NULL);
@@ -71,7 +72,7 @@ bool ReadParamMapping() {
 		std::cout << "fileMappingCreate - GetFileSize failed, fname = "
 			<< fname << std::endl;
 		CloseHandle(hFile);
-		return NULL;
+		return false;
 	}
 
 	HANDLE hMapping = CreateFileMappingW(
@@ -86,10 +87,8 @@ bool ReadParamMapping() {
 		std::cout << "fileMappingCreate - CreateFileMapping failed, fname = "
 			<< fname << std::endl;
 		CloseHandle(hFile);
-		return NULL;
+		return false;
 	}
-
-
 
 	LPVOID hViewOfFile = MapViewOfFile(
 		hMapping,
@@ -98,13 +97,13 @@ bool ReadParamMapping() {
 		0,
 		dwFileSize
 	);
-	unsigned char* dataPtr = (unsigned char*)hViewOfFile;
+	char* dataPtr = (char*)hViewOfFile;
 	if (dataPtr == NULL) {
 		std::cout << "fileMappingCreate - MapViewOfFile failed, fname = "
 			<< fname << std::endl;
 		CloseHandle(hMapping);
 		CloseHandle(hFile);
-		return NULL;
+		return false;
 	}
 
 	/*FileMapping* mapping = (FileMapping*)malloc(sizeof(FileMapping));
@@ -116,14 +115,18 @@ bool ReadParamMapping() {
 		CloseHandle(hFile);
 		return NULL;
 	}*/
-	DataF.N = dataPtr[0];
-	DataF.szXWND = dataPtr[2];
-	DataF.szYWND = dataPtr[4];
-	DataF.colorBack = dataPtr[6];
-	DataF.colorLine = dataPtr[8];
-	for (int i = 10; i < dwFileSize; i++) {
-		DataF.nameIcon[i] = dataPtr[i];
-	}
+
+	std::stringstream sstr;
+	sstr << dataPtr;
+	/*DataF.N = dataPtr[0];
+	DataF.szXWND = dataPtr[3];
+	DataF.szYWND = dataPtr[6];
+	DataF.colorBack = dataPtr[9];
+	DataF.colorLine = dataPtr[12];*/
+	char tmpIconName[LENGTH_WAY_TO_ICON];
+	sstr >> DataF.N >> DataF.szXWND >> DataF.szYWND >> DataF.colorBack
+			>> DataF.colorLine >> DataF.nameIcon;
+	
 	//mapping->hFile = hFile;
 	//mapping->hMapping = hMapping;
 	//mapping->dataPtr = dataPtr;
@@ -131,18 +134,19 @@ bool ReadParamMapping() {
 	UnmapViewOfFile(hViewOfFile);
 	CloseHandle(hMapping);
 	CloseHandle(hFile);
+	return 1;
 }
-// Оптимизировать
+
 bool ReadParamStream() {
 	std::ifstream fin(fname);
-	char tmpIconName[1024];
+	//char tmpIconName[LENGTH_WAY_TO_ICON];
 	if (fin >> DataF.N) {
 		fin >> DataF.szXWND >> DataF.szYWND >> DataF.colorBack
-			>> DataF.colorLine >> tmpIconName;
-		// ПЕРЕДЕЛАТЬ
-		for (int i = 0; i < strlen(tmpIconName); i++) {
+			>> DataF.colorLine >> DataF.nameIcon;
+		// 
+		/*for (int i = 0; i < LENGTH_WAY_TO_ICON; i++) {
 			DataF.nameIcon[i] = tmpIconName[i];
-		}
+		}*/
 		fin.close();
 	}
 	return 1;
@@ -152,14 +156,75 @@ bool ReadParam() {
 	switch (TYPE_OF_IO)
 	{
 	case TYPE_MAPPING: {
-		ReadParamMapping();
-		break;
+		return ReadParamMapping();
 	}
 	default:
 		return ReadParamStream();
 	}
 }
 
+
+void WriteParamMapping() {
+	HANDLE hFile = CreateFileW(
+		fname,
+		GENERIC_READ,// Changed
+		0,
+		NULL,
+		OPEN_EXISTING, // Changed
+		FILE_ATTRIBUTE_NORMAL,
+		NULL
+	);
+	if (hFile == INVALID_HANDLE_VALUE) {
+		std::cout << "fileMappingCreate - CreateFile failed, fname = "
+			<< fname << std::endl;
+		return;
+	}
+
+	DWORD dwFileSize = GetFileSize(hFile, NULL);
+	if (dwFileSize == INVALID_FILE_SIZE) {
+		std::cout << "fileMappingCreate - GetFileSize failed, fname = "
+			<< fname << std::endl;
+		CloseHandle(hFile);
+		return;
+	}
+
+	HANDLE hMapping = CreateFileMappingW(
+		hFile,
+		NULL,
+		PAGE_READONLY, // Changed
+		0,
+		0,
+		NULL
+	);
+	if (hMapping == NULL) {
+		std::cout << "fileMappingCreate - CreateFileMapping failed, fname = "
+			<< fname << std::endl;
+		CloseHandle(hFile);
+		return;
+	}
+
+	LPVOID hViewOfFile = MapViewOfFile(
+		hMapping,
+		FILE_MAP_READ,
+		0,
+		0,
+		dwFileSize
+	);
+	char* dataPtr = (char*)hViewOfFile;
+	if (dataPtr == NULL) {
+		std::cout << "fileMappingCreate - MapViewOfFile failed, fname = "
+			<< fname << std::endl;
+		CloseHandle(hMapping);
+		CloseHandle(hFile);
+		return;
+	}
+
+
+
+	UnmapViewOfFile(hViewOfFile);
+	CloseHandle(hMapping);
+	CloseHandle(hFile);
+}
 
 void WriteParamStream() {
 	std::ofstream fout(fname);
@@ -176,6 +241,11 @@ void WriteParam() {
 		return WriteParamStream();
 	}
 }
+
+//
+//bool ReadIntMapping(int& a, int& i, char* dataPtr) {
+//
+//}
 
 
 void RunNotepad(void)
@@ -293,15 +363,15 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 }
 
 void setStandartIcon() {
-	for (int i = 0; i < strlen(STANDART_ICON_NAME); i++) {
+	for (int i = 0; i < LENGTH_WAY_TO_ICON; i++) {
 		DataF.nameIcon[i] = STANDART_ICON_NAME[i];
 	}
 }
 
 int main()
 {
-	if (!ReadParam()) return 0;
-	if (DataF.nameIcon[0] == '\0') setStandartIcon();
+	//if (!ReadParam()) return 0;
+	if (!ReadParam()) setStandartIcon();
 
 	BOOL bMessageOk;
 	MSG message;            /* Here message to the application are saved */
