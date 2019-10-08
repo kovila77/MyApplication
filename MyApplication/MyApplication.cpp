@@ -10,6 +10,7 @@
 #define TYPE_STREAM 1
 #define TYPE_MAPPING 2
 
+
 const int TYPE_OF_IO = TYPE_STREAM;
 const wchar_t* fname = _T("Param.dat");
 
