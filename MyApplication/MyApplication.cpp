@@ -14,7 +14,7 @@
 #define TYPE_FDOING 4
 #define LENGTH_WAY_TO_ICON 512
 
-const int TYPE_OF_IO = TYPE_FDOING;
+int TYPE_OF_IO = TYPE_FDOING;
 const wchar_t* fname = _T("Param.dat");
 
 const int HOTKEY__SHIFT_C__NOTEPAD = 15;
@@ -51,7 +51,7 @@ bool ReadParamFdoing() {
 	}
 
 	fseek(stream, 0, SEEK_END);
-	int fileSize = ftell(stream); 
+	int fileSize = ftell(stream);
 	fseek(stream, 0, SEEK_SET);
 
 	char* buff = new char[fileSize + 1];
@@ -92,8 +92,8 @@ bool ReadParamWinAPI() {
 		return NULL;
 	}
 
-	char* buff = new char[dwFileSize+1];
-	ZeroMemory(buff, dwFileSize+1);
+	char* buff = new char[dwFileSize + 1];
+	ZeroMemory(buff, dwFileSize + 1);
 	//buff[dwFileSize] = '\0';
 	std::stringstream sstr;
 
@@ -108,7 +108,7 @@ bool ReadParamWinAPI() {
 		>> DataF.colorLine >> DataF.nameIcon;
 
 	CloseHandle(hFile);
-	delete []buff;
+	delete[]buff;
 	return 1;
 }
 
@@ -255,7 +255,7 @@ void WriteParamWinAPI() {
 	strcpy_s(buff, strStream.length() + 1, strStream.c_str());
 
 	WriteFile(hFile, buff, strStream.length() + 1, NULL, NULL);
-	
+
 	CloseHandle(hFile);
 	delete[]buff;
 }
@@ -365,7 +365,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 {
 	switch (message) {
 	case WM_DESTROY: {
-		PostQuitMessage(0); 
+		PostQuitMessage(0);
 		return 0;
 	}
 	case WM_PAINT: {
@@ -463,12 +463,30 @@ void setStandartIcon() {
 	}
 }
 
-int main()
+int main(int argc, char* argv[])
 {
+	if (argv != NULL) {
+		if (argv[0] == "-ts") { 
+			TYPE_OF_IO = TYPE_STREAM;
+			std::cout << "IO set TYPE_STREAM" << std::endl;
+		}
+		if (argv[0] == "-tm") {
+			TYPE_OF_IO = TYPE_MAPPING;
+			std::cout << "IO set TYPE_MAPPING" << std::endl;
+		}
+		if (argv[0] == "-tw") {
+			TYPE_OF_IO = TYPE_WINAPI; 
+			std::cout << "IO set TYPE_WINAPI" << std::endl;
+		}
+		std::cout << "IO set TYPE_FDOING" << std::endl;
+	}
+	else {
+		std::cout << "IO set TYPE_FDOING" << std::endl;
+	}
 	if (!ReadParam()) setStandartIcon();
 
 	BOOL bMessageOk;
-	MSG message;           
+	MSG message;
 	WNDCLASSEX wincl = { 0 };
 	HINSTANCE hThisInstance = GetModuleHandle(NULL);
 
@@ -489,7 +507,7 @@ int main()
 	wincl.hInstance = hThisInstance;
 	wincl.lpszClassName = szWinClass;
 	wincl.style = CS_HREDRAW | CS_VREDRAW;
-	wincl.lpfnWndProc = WindowProcedure; 
+	wincl.lpfnWndProc = WindowProcedure;
 	wincl.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wincl.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 	wincl.cbSize = sizeof(WNDCLASSEX);
