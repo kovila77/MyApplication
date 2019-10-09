@@ -4,16 +4,17 @@
 #include <windowsx.h>
 #include <random>
 #include <fstream>
-#include <sstream> // 
-#include <string> // Подключаю стринг
+#include <sstream>
+#include <string>
 #define COLOR_ELLIPS RGB(255, 0, 0)
 #define COLOR_RAND RGB(rand() % 255, rand() % 255, rand() % 255)
 #define TYPE_STREAM 1
 #define TYPE_MAPPING 2
 #define TYPE_WINAPI 3
+#define TYPE_FDOING 4
 #define LENGTH_WAY_TO_ICON 512
 
-const int TYPE_OF_IO = TYPE_WINAPI;
+const int TYPE_OF_IO = TYPE_FDOING;
 const wchar_t* fname = _T("Param.dat");
 
 const int HOTKEY__SHIFT_C__NOTEPAD = 15;
@@ -51,6 +52,34 @@ bool** haveEll;
 //	unsigned char* dataPtr;
 //};
 
+
+bool ReadParamFdoing() {
+	FILE* stream;
+	_wfopen_s(&stream, fname, _T("r"));
+	if (stream == NULL) {
+		std::cout << "Error Open file" << std::endl;
+		return false;
+	}
+
+	fseek(stream, 0, SEEK_END);
+	int fileSize = ftell(stream); 
+	fseek(stream, 0, SEEK_SET);
+
+	char* buff = new char[fileSize + 1];
+	ZeroMemory(buff, fileSize + 1);
+	//buff[fileSize] = '\0';
+	fread(buff, 1, fileSize, stream);
+
+	std::stringstream sstr;
+
+	sstr << buff;
+	sstr >> DataF.N >> DataF.szXWND >> DataF.szYWND >> DataF.colorBack
+		>> DataF.colorLine >> DataF.nameIcon;
+
+	delete[] buff;
+	fclose(stream);
+	return 1;
+}
 
 bool ReadParamWinAPI() {
 	HANDLE hFile = CreateFileW(
@@ -206,11 +235,37 @@ bool ReadParam() {
 	case TYPE_WINAPI: {
 		return ReadParamWinAPI();
 	}
+	case TYPE_FDOING: {
+		return ReadParamFdoing();
+	}
 	default:
 		return ReadParamStream();
 	}
 }
 
+
+void WriteParamFdoing() {
+	FILE* stream;
+	_wfopen_s(&stream, fname, _T("w"));
+	if (stream == NULL) {
+		std::cout << "Error Open file" << std::endl;
+		return;
+	}
+
+	std::stringstream sstr;
+	sstr << DataF.N << std::endl << DataF.szXWND << std::endl << DataF.szYWND << std::endl << DataF.colorBack
+		<< std::endl << DataF.colorLine << std::endl << DataF.nameIcon;
+	std::string strStream = sstr.str();
+
+	char* buff = new char[strStream.length() + 1];
+	//buff[strStream.length() + 1] = '\0';
+	strcpy_s(buff, strStream.length() + 1, strStream.c_str());
+
+	fwrite(buff, 1, strStream.length(), stream);
+
+	delete[] buff;
+	fclose(stream);
+}
 
 void WriteParamWinAPI() {
 	std::stringstream sstr;
@@ -322,13 +377,19 @@ void WriteParam() {
 	switch (TYPE_OF_IO)
 	{
 	case TYPE_WINAPI: {
-		return WriteParamWinAPI();
+		WriteParamWinAPI();
+		break;
 	}
 	case TYPE_MAPPING: {
-		return WriteParamMapping();
+		WriteParamMapping();
+		break;
 	}
+	case TYPE_FDOING:
+		WriteParamFdoing();
+		break;
 	default:
-		return WriteParamStream();
+		WriteParamStream();
+		break;
 	}
 }
 
