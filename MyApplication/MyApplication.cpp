@@ -21,19 +21,15 @@ const int HOTKEY__SHIFT_C__NOTEPAD = 15;
 const int HOTKEY__RETURN__CHANGE_COLOR = 16;
 const int HOTKEY__ESC__EXIT = 17;
 const int HOTKEY__CONTROL_Q__EXIT = 18;
-//const int STANDART_N = 15; // Не 0!
-//const int STANDART_szXWND = 320;
-//const int STANDART_szYWND = 240;
 const char STANDART_ICON_NAME[] = "icon.ico";
 const TCHAR szWinClass[] = _T("Win32SampleApp");
 const TCHAR szWinName[] = _T("Win32SampleWindow");
-HWND hwnd;               /* This is the handle for our window */
+HWND hwnd;
 HPEN lPen;
-HBRUSH hBrush;           /* Current brush */
+HBRUSH hBrush;
 HBRUSH hBrushEll;
 int xElipse = -1;
 int yElipse = -1;
-
 
 struct loadData {
 	int N = 3;
@@ -44,13 +40,6 @@ struct loadData {
 	char nameIcon[LENGTH_WAY_TO_ICON];
 } DataF;
 bool** haveEll;
-
-//struct FileMapping {
-//	HANDLE hFile;
-//	HANDLE hMapping;
-//	size_t fsize;
-//	unsigned char* dataPtr;
-//};
 
 
 bool ReadParamFdoing() {
@@ -114,8 +103,6 @@ bool ReadParamWinAPI() {
 		return false;
 	}
 
-	//buff[dwFileSize] = '\0';
-
 	sstr << buff;
 	sstr >> DataF.N >> DataF.szXWND >> DataF.szYWND >> DataF.colorBack
 		>> DataF.colorLine >> DataF.nameIcon;
@@ -128,10 +115,10 @@ bool ReadParamWinAPI() {
 bool ReadParamMapping() {
 	HANDLE hFile = CreateFileW(
 		fname,
-		GENERIC_READ,// Changed
+		GENERIC_READ,
 		0,
 		NULL,
-		OPEN_EXISTING, // Changed
+		OPEN_EXISTING,
 		FILE_ATTRIBUTE_NORMAL,
 		NULL
 	);
@@ -152,7 +139,7 @@ bool ReadParamMapping() {
 	HANDLE hMapping = CreateFileMappingW(
 		hFile,
 		NULL,
-		PAGE_READONLY, // Changed
+		PAGE_READONLY,
 		0,
 		0,
 		NULL
@@ -180,31 +167,12 @@ bool ReadParamMapping() {
 		return false;
 	}
 
-	/*FileMapping* mapping = (FileMapping*)malloc(sizeof(FileMapping));
-	if (mapping == NULL) {
-		std::cerr << "fileMappingCreate - malloc failed, fname = "
-			<< fname << std::endl;
-		UnmapViewOfFile(dataPtr);
-		CloseHandle(hMapping);
-		CloseHandle(hFile);
-		return NULL;
-	}*/
-
 	std::stringstream sstr;
 	sstr << dataPtr;
-	/*DataF.N = dataPtr[0];
-	DataF.szXWND = dataPtr[3];
-	DataF.szYWND = dataPtr[6];
-	DataF.colorBack = dataPtr[9];
-	DataF.colorLine = dataPtr[12];*/
-	//char tmpIconName[LENGTH_WAY_TO_ICON];
+
 	sstr >> DataF.N >> DataF.szXWND >> DataF.szYWND >> DataF.colorBack
 		>> DataF.colorLine >> DataF.nameIcon;
 
-	//mapping->hFile = hFile;
-	//mapping->hMapping = hMapping;
-	//mapping->dataPtr = dataPtr;
-	//mapping->fsize = (size_t)dwFileSize;
 	UnmapViewOfFile(hViewOfFile);
 	CloseHandle(hMapping);
 	CloseHandle(hFile);
@@ -213,14 +181,9 @@ bool ReadParamMapping() {
 
 bool ReadParamStream() {
 	std::ifstream fin(fname);
-	//char tmpIconName[LENGTH_WAY_TO_ICON];
 	if (fin >> DataF.N) {
 		fin >> DataF.szXWND >> DataF.szYWND >> DataF.colorBack
 			>> DataF.colorLine >> DataF.nameIcon;
-		// 
-		/*for (int i = 0; i < LENGTH_WAY_TO_ICON; i++) {
-			DataF.nameIcon[i] = tmpIconName[i];
-		}*/
 		fin.close();
 	}
 	return 1;
@@ -291,7 +254,6 @@ void WriteParamWinAPI() {
 	//buff[strStream.length() + 1] = '\0';
 	strcpy_s(buff, strStream.length() + 1, strStream.c_str());
 
-
 	WriteFile(hFile, buff, strStream.length() + 1, NULL, NULL);
 	
 	CloseHandle(hFile);
@@ -306,10 +268,10 @@ void WriteParamMapping() {
 
 	HANDLE hFile = CreateFileW(
 		fname,
-		GENERIC_READ | GENERIC_WRITE,// Changed
+		GENERIC_READ | GENERIC_WRITE,
 		0,
 		NULL,
-		CREATE_ALWAYS, // Changed
+		CREATE_ALWAYS,
 		FILE_ATTRIBUTE_NORMAL,
 		NULL
 	);
@@ -318,14 +280,6 @@ void WriteParamMapping() {
 			<< fname << std::endl;
 		return;
 	}
-
-	/*DWORD dwFileSize = GetFileSize(hFile, NULL);
-	if (dwFileSize == INVALID_FILE_SIZE) {
-		std::cout << "fileMappingCreate - GetFileSize failed, fname = "
-			<< fname << std::endl;
-		CloseHandle(hFile);
-		return;
-	}*/
 
 	HANDLE hMapping = CreateFileMappingW(
 		hFile,
@@ -393,11 +347,6 @@ void WriteParam() {
 	}
 }
 
-//
-//bool ReadIntMapping(int& a, int& i, char* dataPtr) {
-//
-//}
-
 
 void RunNotepad(void)
 {
@@ -406,7 +355,6 @@ void RunNotepad(void)
 
 	ZeroMemory(&sInfo, sizeof(STARTUPINFO));
 
-	//puts("Starting Notepad...");
 	CreateProcess(_T("C:\\Windows\\Notepad.exe"),
 		NULL, NULL, NULL, FALSE, 0, NULL, NULL, &sInfo, &pInfo);
 	CloseHandle(pInfo.hProcess);
@@ -415,12 +363,9 @@ void RunNotepad(void)
 
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	switch (message) {/*
-	case WM_CREATE: {
-		return 0;
-	}*/
+	switch (message) {
 	case WM_DESTROY: {
-		PostQuitMessage(0);       /* send a WM_QUIT to the message queue */
+		PostQuitMessage(0); 
 		return 0;
 	}
 	case WM_PAINT: {
@@ -466,7 +411,6 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		break;
 	}
 	case WM_HOTKEY: {
-		//if (hwnd == GetActiveWindow())
 		switch (wParam) {
 		case HOTKEY__ESC__EXIT: {
 			DestroyWindow(hwnd);
@@ -521,13 +465,12 @@ void setStandartIcon() {
 
 int main()
 {
-	//if (!ReadParam()) return 0;
 	if (!ReadParam()) setStandartIcon();
 
 	BOOL bMessageOk;
-	MSG message;            /* Here message to the application are saved */
-	WNDCLASSEX wincl = { 0 };         /* Data structure for the windowclass */
-	HINSTANCE hThisInstance = GetModuleHandle(NULL); /* Get handle */
+	MSG message;           
+	WNDCLASSEX wincl = { 0 };
+	HINSTANCE hThisInstance = GetModuleHandle(NULL);
 
 	hBrush = CreateSolidBrush(DataF.colorBack);
 	hBrushEll = CreateSolidBrush(COLOR_ELLIPS);
@@ -543,13 +486,13 @@ int main()
 		}
 	}
 
-	wincl.hInstance = hThisInstance;	/* The Window structure */
+	wincl.hInstance = hThisInstance;
 	wincl.lpszClassName = szWinClass;
 	wincl.style = CS_HREDRAW | CS_VREDRAW;
-	wincl.lpfnWndProc = WindowProcedure;      /* This function is called by Windows */
+	wincl.lpfnWndProc = WindowProcedure; 
 	wincl.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wincl.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-	wincl.cbSize = sizeof(WNDCLASSEX); // ??
+	wincl.cbSize = sizeof(WNDCLASSEX);
 	wincl.hbrBackground = hBrush;
 
 	if (!RegisterClassEx(&wincl))
