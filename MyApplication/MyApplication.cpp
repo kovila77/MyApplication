@@ -212,6 +212,37 @@ bool ReadParam() {
 }
 
 
+void WriteParamWinAPI() {
+	std::stringstream sstr;
+	sstr << DataF.N << std::endl << DataF.szXWND << std::endl << DataF.szYWND << std::endl << DataF.colorBack
+		<< std::endl << DataF.colorLine << std::endl << DataF.nameIcon;
+	std::string strStream = sstr.str();
+
+	HANDLE hFile = CreateFileW(
+		fname,
+		GENERIC_READ | GENERIC_WRITE,
+		0,
+		NULL,
+		CREATE_ALWAYS,
+		FILE_ATTRIBUTE_NORMAL,
+		NULL
+	);
+	if (hFile == INVALID_HANDLE_VALUE) {
+		std::cout << "fileMappingCreate - CreateFile failed, fname = " << std::endl;
+		return;
+	}
+
+	char* buff = new char[strStream.length() + 1];
+	//buff[strStream.length() + 1] = '\0';
+	strcpy_s(buff, strStream.length() + 1, strStream.c_str());
+
+
+	WriteFile(hFile, buff, strStream.length() + 1, NULL, NULL);
+	
+	CloseHandle(hFile);
+	delete[]buff;
+}
+
 void WriteParamMapping() {
 	std::stringstream sstr;
 	sstr << DataF.N << std::endl << DataF.szXWND << std::endl << DataF.szYWND << std::endl << DataF.colorBack
@@ -290,6 +321,9 @@ void WriteParamStream() {
 void WriteParam() {
 	switch (TYPE_OF_IO)
 	{
+	case TYPE_WINAPI: {
+		return WriteParamWinAPI();
+	}
 	case TYPE_MAPPING: {
 		return WriteParamMapping();
 	}
