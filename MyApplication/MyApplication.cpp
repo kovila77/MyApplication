@@ -463,26 +463,30 @@ void setStandartIcon() {
 	}
 }
 
-int main(int argc, char* argv[])
-{
-	if (argv != NULL) {
-		if (argv[0] == "-ts") { 
-			TYPE_OF_IO = TYPE_STREAM;
-			std::cout << "IO set TYPE_STREAM" << std::endl;
-		}
-		if (argv[0] == "-tm") {
+void setTypeIO(const char* arg) {
+	if (strcmp(arg, "-ts") == 0) {
+		TYPE_OF_IO = TYPE_STREAM;
+		std::cout << "IO set TYPE_STREAM" << std::endl;
+	}
+	else
+		if (strcmp(arg, "-tm") == 0) {
 			TYPE_OF_IO = TYPE_MAPPING;
 			std::cout << "IO set TYPE_MAPPING" << std::endl;
 		}
-		if (argv[0] == "-tw") {
-			TYPE_OF_IO = TYPE_WINAPI; 
-			std::cout << "IO set TYPE_WINAPI" << std::endl;
-		}
-		std::cout << "IO set TYPE_FDOING" << std::endl;
-	}
-	else {
-		std::cout << "IO set TYPE_FDOING" << std::endl;
-	}
+		else
+			if (strcmp(arg, "-tw") == 0) {
+				TYPE_OF_IO = TYPE_WINAPI;
+				std::cout << "IO set TYPE_WINAPI" << std::endl;
+			}
+			else
+				std::cout << "IO set TYPE_FDOING" << std::endl;
+}
+
+int main(int argc, char* argv[])
+{
+	if (argc > 1)
+		setTypeIO(argv[1]);
+
 	if (!ReadParam()) setStandartIcon();
 
 	BOOL bMessageOk;
