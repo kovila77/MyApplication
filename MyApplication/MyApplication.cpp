@@ -10,9 +10,10 @@
 #define COLOR_RAND RGB(rand() % 255, rand() % 255, rand() % 255)
 #define TYPE_STREAM 1
 #define TYPE_MAPPING 2
+#define TYPE_WINAPI 3
 #define LENGTH_WAY_TO_ICON 512
 
-const int TYPE_OF_IO = TYPE_MAPPING;
+const int TYPE_OF_IO = TYPE_WINAPI;
 const wchar_t* fname = _T("Param.dat");
 
 const int HOTKEY__SHIFT_C__NOTEPAD = 15;
@@ -50,6 +51,50 @@ bool** haveEll;
 //	unsigned char* dataPtr;
 //};
 
+
+bool ReadParamWinAPI() {
+	HANDLE hFile = CreateFileW(
+		fname,
+		GENERIC_READ,// Changed
+		0,
+		NULL,
+		OPEN_EXISTING, // Changed
+		FILE_ATTRIBUTE_NORMAL,
+		NULL
+	);
+	if (hFile == INVALID_HANDLE_VALUE) {
+		std::cout << "fileMappingCreate - CreateFile failed, fname = " << std::endl;
+		return false;
+	}
+
+	DWORD dwFileSize = GetFileSize(hFile, NULL);
+	if (dwFileSize == INVALID_FILE_SIZE) {
+		std::cerr << "fileMappingCreate - GetFileSize failed " << std::endl;
+		CloseHandle(hFile);
+		return NULL;
+	}
+
+	char* buff = new char[dwFileSize+1];
+	ZeroMemory(buff, dwFileSize+1);
+	//buff[dwFileSize] = '\0';
+	std::stringstream sstr;
+
+	if (!ReadFile(hFile, buff, dwFileSize, NULL, NULL)) {
+		std::cout << "ReadFile error" << std::endl;
+		CloseHandle(hFile);
+		return false;
+	}
+
+	//buff[dwFileSize] = '\0';
+
+	sstr << buff;
+	sstr >> DataF.N >> DataF.szXWND >> DataF.szYWND >> DataF.colorBack
+		>> DataF.colorLine >> DataF.nameIcon;
+
+	CloseHandle(hFile);
+	delete []buff;
+	return 1;
+}
 
 bool ReadParamMapping() {
 	HANDLE hFile = CreateFileW(
@@ -123,10 +168,10 @@ bool ReadParamMapping() {
 	DataF.szYWND = dataPtr[6];
 	DataF.colorBack = dataPtr[9];
 	DataF.colorLine = dataPtr[12];*/
-	char tmpIconName[LENGTH_WAY_TO_ICON];
+	//char tmpIconName[LENGTH_WAY_TO_ICON];
 	sstr >> DataF.N >> DataF.szXWND >> DataF.szYWND >> DataF.colorBack
-			>> DataF.colorLine >> DataF.nameIcon;
-	
+		>> DataF.colorLine >> DataF.nameIcon;
+
 	//mapping->hFile = hFile;
 	//mapping->hMapping = hMapping;
 	//mapping->dataPtr = dataPtr;
@@ -158,6 +203,9 @@ bool ReadParam() {
 	case TYPE_MAPPING: {
 		return ReadParamMapping();
 	}
+	case TYPE_WINAPI: {
+		return ReadParamWinAPI();
+	}
 	default:
 		return ReadParamStream();
 	}
@@ -165,12 +213,17 @@ bool ReadParam() {
 
 
 void WriteParamMapping() {
+	std::stringstream sstr;
+	sstr << DataF.N << std::endl << DataF.szXWND << std::endl << DataF.szYWND << std::endl << DataF.colorBack
+		<< std::endl << DataF.colorLine << std::endl << DataF.nameIcon;
+	std::string strStream = sstr.str();
+
 	HANDLE hFile = CreateFileW(
 		fname,
-		GENERIC_READ,// Changed
+		GENERIC_READ | GENERIC_WRITE,// Changed
 		0,
 		NULL,
-		OPEN_EXISTING, // Changed
+		CREATE_ALWAYS, // Changed
 		FILE_ATTRIBUTE_NORMAL,
 		NULL
 	);
@@ -180,20 +233,20 @@ void WriteParamMapping() {
 		return;
 	}
 
-	DWORD dwFileSize = GetFileSize(hFile, NULL);
+	/*DWORD dwFileSize = GetFileSize(hFile, NULL);
 	if (dwFileSize == INVALID_FILE_SIZE) {
 		std::cout << "fileMappingCreate - GetFileSize failed, fname = "
 			<< fname << std::endl;
 		CloseHandle(hFile);
 		return;
-	}
+	}*/
 
 	HANDLE hMapping = CreateFileMappingW(
 		hFile,
 		NULL,
-		PAGE_READONLY, // Changed
+		PAGE_READWRITE, // Changed
 		0,
-		0,
+		strStream.length(),
 		NULL
 	);
 	if (hMapping == NULL) {
@@ -205,10 +258,10 @@ void WriteParamMapping() {
 
 	LPVOID hViewOfFile = MapViewOfFile(
 		hMapping,
-		FILE_MAP_READ,
+		FILE_MAP_WRITE,
 		0,
 		0,
-		dwFileSize
+		strStream.length()
 	);
 	char* dataPtr = (char*)hViewOfFile;
 	if (dataPtr == NULL) {
@@ -219,7 +272,7 @@ void WriteParamMapping() {
 		return;
 	}
 
-
+	strcpy_s((char*)hViewOfFile, sstr.str().length() + 1, sstr.str().c_str());
 
 	UnmapViewOfFile(hViewOfFile);
 	CloseHandle(hMapping);
@@ -237,6 +290,9 @@ void WriteParamStream() {
 void WriteParam() {
 	switch (TYPE_OF_IO)
 	{
+	case TYPE_MAPPING: {
+		return WriteParamMapping();
+	}
 	default:
 		return WriteParamStream();
 	}
@@ -363,7 +419,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 }
 
 void setStandartIcon() {
-	for (int i = 0; i < LENGTH_WAY_TO_ICON; i++) {
+	for (int i = 0; i < strlen(STANDART_ICON_NAME); i++) {
 		DataF.nameIcon[i] = STANDART_ICON_NAME[i];
 	}
 }
