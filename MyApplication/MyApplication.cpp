@@ -8,12 +8,12 @@
 #include <string>
 #define COLOR_ELLIPS RGB(255, 0, 0)
 #define COLOR_RAND RGB(rand() % 255, rand() % 255, rand() % 255)
-#define TYPE_STREAM 1
-#define TYPE_MAPPING 2
-#define TYPE_WINAPI 3
-#define TYPE_FDOING 4
+#define TPSTREAM 1
+#define TMAPPING 2
+#define TWINAPI 3
+#define TSTREAMIO 4
 
-int TYPE_OF_IO = TYPE_FDOING;
+int TYPE_OF_IO = TPSTREAM;
 const wchar_t* fname = _T("Param.dat");
 
 const int HOTKEY__SHIFT_C__NOTEPAD = 15;
@@ -57,7 +57,7 @@ bool ReadParamFdoing() {
 	char* buff = new char[fileSize + 1];
 	ZeroMemory(buff, fileSize + 1);
 	//buff[fileSize] = '\0';
-	fread(buff, 1, fileSize, stream);
+	fread(buff, sizeof(char), fileSize, stream);
 
 	std::stringstream sstr;
 
@@ -203,13 +203,13 @@ bool ReadParamStream() {
 bool ReadParam() {
 	switch (TYPE_OF_IO)
 	{
-	case TYPE_MAPPING: {
+	case TMAPPING: {
 		return ReadParamMapping();
 	}
-	case TYPE_WINAPI: {
+	case TWINAPI: {
 		return ReadParamWinAPI();
 	}
-	case TYPE_FDOING: {
+	case TSTREAMIO: {
 		return ReadParamFdoing();
 	}
 	default:
@@ -235,13 +235,8 @@ void WriteParamFdoing() {
 		<< std::endl << DataF.nameIcon;
 	std::string strStream = sstr.str();
 
-	//char* buff = new char[strStream.length() + 1];
-	//buff[strStream.length() + 1] = '\0';
-	//strcpy_s(buff, strStream.length() + 1, strStream.c_str());
-
 	fwrite(strStream.c_str(), 1, strStream.length(), stream);
 
-	//delete[] buff;
 	fclose(stream);
 }
 
@@ -269,14 +264,9 @@ void WriteParamWinAPI() {
 		return;
 	}
 
-	//char* buff = new char[strStream.length() + 1];
-	//buff[strStream.length() + 1] = '\0';
-	//strcpy_s(buff, strStream.length() + 1, strStream.c_str());
-
 	WriteFile(hFile, strStream.c_str(), strStream.length(), NULL, NULL);
 
 	CloseHandle(hFile);
-	//delete[]buff;
 }
 
 void WriteParamMapping() {
@@ -356,15 +346,15 @@ void WriteParamStream() {
 void WriteParam() {
 	switch (TYPE_OF_IO)
 	{
-	case TYPE_WINAPI: {
+	case TWINAPI: {
 		WriteParamWinAPI();
 		break;
 	}
-	case TYPE_MAPPING: {
+	case TMAPPING: {
 		WriteParamMapping();
 		break;
 	}
-	case TYPE_FDOING:
+	case TSTREAMIO:
 		WriteParamFdoing();
 		break;
 	default:
@@ -493,22 +483,23 @@ void setStandartIcon() {
 }
 
 void setTypeIO(const char* arg) {
-	if (strcmp(arg, "-ts") == 0) {
-		TYPE_OF_IO = TYPE_STREAM;
-		std::cout << "IO set TYPE_STREAM" << std::endl;
+	if (strcmp(arg, "-tp") == 0) {
+		TYPE_OF_IO = TPSTREAM;
+		std::cout << "IO set \"standart c++ stream\"" << std::endl;
 	}
 	else
 		if (strcmp(arg, "-tm") == 0) {
-			TYPE_OF_IO = TYPE_MAPPING;
-			std::cout << "IO set TYPE_MAPPING" << std::endl;
+			TYPE_OF_IO = TMAPPING;
+			std::cout << "IO set \"memory mapping\"" << std::endl;
 		}
 		else
 			if (strcmp(arg, "-tw") == 0) {
-				TYPE_OF_IO = TYPE_WINAPI;
-				std::cout << "IO set TYPE_WINAPI" << std::endl;
+				TYPE_OF_IO = TWINAPI;
+				std::cout << "IO set \"WIN API method\"" << std::endl;
 			}
-			else
-				std::cout << "IO set TYPE_FDOING" << std::endl;
+			else if (strcmp(arg, "-ts") == 0) {
+				std::cout << "IO set \"c method\"" << std::endl;
+			}
 }
 
 int main(int argc, char* argv[])
