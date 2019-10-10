@@ -32,8 +32,8 @@ int yElipse = -1;
 
 struct loadData {
 	int N = 3;
-	int szXWND = 320;
-	int szYWND = 240;
+	int szXWNDCreated = 320;
+	int szYWNDCreated = 240;
 	COLORREF colorBack = RGB(0, 0, 255);
 	COLORREF colorLine = RGB(255, 0, 0);
 	int lenIcon;
@@ -62,7 +62,7 @@ bool ReadParamFdoing() {
 	std::stringstream sstr;
 
 	sstr << buff;
-	sstr >> DataF.N >> DataF.szXWND >> DataF.szYWND >> DataF.colorBack
+	sstr >> DataF.N >> DataF.szXWNDCreated >> DataF.szYWNDCreated >> DataF.colorBack
 		>> DataF.colorLine >> DataF.lenIcon;
 	DataF.nameIcon = new char[DataF.lenIcon + 1];
 	ZeroMemory(DataF.nameIcon, DataF.lenIcon + 1);
@@ -107,7 +107,7 @@ bool ReadParamWinAPI() {
 	}
 
 	sstr << buff;
-	sstr >> DataF.N >> DataF.szXWND >> DataF.szYWND >> DataF.colorBack
+	sstr >> DataF.N >> DataF.szXWNDCreated >> DataF.szYWNDCreated >> DataF.colorBack
 		>> DataF.colorLine >> DataF.lenIcon;
 	DataF.nameIcon = new char[DataF.lenIcon + 1];
 	ZeroMemory(DataF.nameIcon, DataF.lenIcon + 1);
@@ -176,7 +176,7 @@ bool ReadParamMapping() {
 	std::stringstream sstr;
 	sstr << dataPtr;
 
-	sstr >> DataF.N >> DataF.szXWND >> DataF.szYWND >> DataF.colorBack
+	sstr >> DataF.N >> DataF.szXWNDCreated >> DataF.szYWNDCreated >> DataF.colorBack
 		>> DataF.colorLine >> DataF.lenIcon;
 	DataF.nameIcon = new char[DataF.lenIcon + 1];
 	ZeroMemory(DataF.nameIcon, DataF.lenIcon + 1);
@@ -191,7 +191,7 @@ bool ReadParamMapping() {
 bool ReadParamStream() {
 	std::ifstream fin(fname);
 	if (!fin.is_open()) return false;
-	fin >> DataF.N >> DataF.szXWND >> DataF.szYWND >> DataF.colorBack
+	fin >> DataF.N >> DataF.szXWNDCreated >> DataF.szYWNDCreated >> DataF.colorBack
 		>> DataF.colorLine >> DataF.lenIcon;
 	DataF.nameIcon = new char[DataF.lenIcon + 1];
 	ZeroMemory(DataF.nameIcon, DataF.lenIcon + 1);
@@ -227,8 +227,8 @@ void WriteParamFdoing() {
 	}
 
 	std::stringstream sstr;
-	sstr << DataF.N << std::endl << DataF.szXWND
-		<< std::endl << DataF.szYWND
+	sstr << DataF.N << std::endl << DataF.szXWNDCreated
+		<< std::endl << DataF.szYWNDCreated
 		<< std::endl << DataF.colorBack
 		<< std::endl << DataF.colorLine
 		<< std::endl << strlen(DataF.nameIcon)
@@ -242,8 +242,8 @@ void WriteParamFdoing() {
 
 void WriteParamWinAPI() {
 	std::stringstream sstr;
-	sstr << DataF.N << std::endl << DataF.szXWND
-		<< std::endl << DataF.szYWND
+	sstr << DataF.N << std::endl << DataF.szXWNDCreated
+		<< std::endl << DataF.szYWNDCreated
 		<< std::endl << DataF.colorBack
 		<< std::endl << DataF.colorLine
 		<< std::endl << strlen(DataF.nameIcon)
@@ -271,8 +271,8 @@ void WriteParamWinAPI() {
 
 void WriteParamMapping() {
 	std::stringstream sstr;
-	sstr << DataF.N << std::endl << DataF.szXWND
-		<< std::endl << DataF.szYWND
+	sstr << DataF.N << std::endl << DataF.szXWNDCreated
+		<< std::endl << DataF.szYWNDCreated
 		<< std::endl << DataF.colorBack
 		<< std::endl << DataF.colorLine
 		<< std::endl << strlen(DataF.nameIcon)
@@ -334,8 +334,8 @@ void WriteParamMapping() {
 
 void WriteParamStream() {
 	std::ofstream fout(fname);
-	fout << DataF.N << std::endl << DataF.szXWND
-		<< std::endl << DataF.szYWND
+	fout << DataF.N << std::endl << DataF.szXWNDCreated
+		<< std::endl << DataF.szYWNDCreated
 		<< std::endl << DataF.colorBack
 		<< std::endl << DataF.colorLine
 		<< std::endl << strlen(DataF.nameIcon)
@@ -381,6 +381,12 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 {
 	switch (message) {
 	case WM_DESTROY: {
+		//Актуализация размеров окна
+		RECT tmpWR = {0};
+		GetWindowRect(hwnd, &tmpWR);
+		DataF.szXWNDCreated = tmpWR.right - tmpWR.left;
+		DataF.szYWNDCreated = tmpWR.bottom - tmpWR.top;
+
 		PostQuitMessage(0);
 		return 0;
 	}
@@ -547,8 +553,8 @@ int main(int argc, char* argv[])
 		WS_OVERLAPPEDWINDOW, /* default window */
 		CW_USEDEFAULT,       /* Windows decides the position */
 		CW_USEDEFAULT,       /* where the window ends up on the screen */
-		DataF.szXWND,                 /* The programs width */
-		DataF.szYWND,                 /* and height in pixels */
+		DataF.szXWNDCreated,                 /* The programs width */
+		DataF.szYWNDCreated,                 /* and height in pixels */
 		HWND_DESKTOP,        /* The window is a child-window to desktop */
 		NULL,                /* No menu */
 		hThisInstance,       /* Program Instance handler */
@@ -571,8 +577,9 @@ int main(int argc, char* argv[])
 		DispatchMessage(&message);
 	}
 
-	WriteParam();
+	//WriteParam();
 	DestroyWindow(hwnd);
+	WriteParam();
 	for (int i = 0; i < DataF.N + 1; i++) {
 		delete[]haveEll[i];
 	}
