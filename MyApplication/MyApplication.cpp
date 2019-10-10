@@ -12,7 +12,6 @@
 #define TYPE_MAPPING 2
 #define TYPE_WINAPI 3
 #define TYPE_FDOING 4
-#define LENGTH_WAY_TO_ICON 512
 
 int TYPE_OF_IO = TYPE_FDOING;
 const wchar_t* fname = _T("Param.dat");
@@ -37,7 +36,8 @@ struct loadData {
 	int szYWND = 240;
 	COLORREF colorBack = RGB(0, 0, 255);
 	COLORREF colorLine = RGB(255, 0, 0);
-	char nameIcon[LENGTH_WAY_TO_ICON];
+	int lenIcon;
+	char* nameIcon;
 } DataF;
 bool** haveEll;
 
@@ -63,7 +63,10 @@ bool ReadParamFdoing() {
 
 	sstr << buff;
 	sstr >> DataF.N >> DataF.szXWND >> DataF.szYWND >> DataF.colorBack
-		>> DataF.colorLine >> DataF.nameIcon;
+		>> DataF.colorLine >> DataF.lenIcon;
+	DataF.nameIcon = new char[DataF.lenIcon + 1];
+	ZeroMemory(DataF.nameIcon, DataF.lenIcon + 1);
+	sstr >> DataF.nameIcon;
 
 	delete[] buff;
 	fclose(stream);
@@ -105,7 +108,10 @@ bool ReadParamWinAPI() {
 
 	sstr << buff;
 	sstr >> DataF.N >> DataF.szXWND >> DataF.szYWND >> DataF.colorBack
-		>> DataF.colorLine >> DataF.nameIcon;
+		>> DataF.colorLine >> DataF.lenIcon;
+	DataF.nameIcon = new char[DataF.lenIcon + 1];
+	ZeroMemory(DataF.nameIcon, DataF.lenIcon + 1);
+	sstr >> DataF.nameIcon;
 
 	CloseHandle(hFile);
 	delete[]buff;
@@ -171,7 +177,10 @@ bool ReadParamMapping() {
 	sstr << dataPtr;
 
 	sstr >> DataF.N >> DataF.szXWND >> DataF.szYWND >> DataF.colorBack
-		>> DataF.colorLine >> DataF.nameIcon;
+		>> DataF.colorLine >> DataF.lenIcon;
+	DataF.nameIcon = new char[DataF.lenIcon + 1];
+	ZeroMemory(DataF.nameIcon, DataF.lenIcon + 1);
+	sstr >> DataF.nameIcon;
 
 	UnmapViewOfFile(hViewOfFile);
 	CloseHandle(hMapping);
@@ -181,11 +190,13 @@ bool ReadParamMapping() {
 
 bool ReadParamStream() {
 	std::ifstream fin(fname);
-	if (fin >> DataF.N) {
-		fin >> DataF.szXWND >> DataF.szYWND >> DataF.colorBack
-			>> DataF.colorLine >> DataF.nameIcon;
-		fin.close();
-	}
+	if (!fin.is_open()) return false;
+	fin >> DataF.N >> DataF.szXWND >> DataF.szYWND >> DataF.colorBack
+		>> DataF.colorLine >> DataF.lenIcon;
+	DataF.nameIcon = new char[DataF.lenIcon + 1];
+	ZeroMemory(DataF.nameIcon, DataF.lenIcon + 1);
+	fin >> DataF.nameIcon;
+	fin.close();
 	return 1;
 }
 
@@ -216,24 +227,32 @@ void WriteParamFdoing() {
 	}
 
 	std::stringstream sstr;
-	sstr << DataF.N << std::endl << DataF.szXWND << std::endl << DataF.szYWND << std::endl << DataF.colorBack
-		<< std::endl << DataF.colorLine << std::endl << DataF.nameIcon;
+	sstr << DataF.N << std::endl << DataF.szXWND
+		<< std::endl << DataF.szYWND
+		<< std::endl << DataF.colorBack
+		<< std::endl << DataF.colorLine
+		<< std::endl << strlen(DataF.nameIcon)
+		<< std::endl << DataF.nameIcon;
 	std::string strStream = sstr.str();
 
-	char* buff = new char[strStream.length() + 1];
+	//char* buff = new char[strStream.length() + 1];
 	//buff[strStream.length() + 1] = '\0';
-	strcpy_s(buff, strStream.length() + 1, strStream.c_str());
+	//strcpy_s(buff, strStream.length() + 1, strStream.c_str());
 
-	fwrite(buff, 1, strStream.length(), stream);
+	fwrite(strStream.c_str(), 1, strStream.length(), stream);
 
-	delete[] buff;
+	//delete[] buff;
 	fclose(stream);
 }
 
 void WriteParamWinAPI() {
 	std::stringstream sstr;
-	sstr << DataF.N << std::endl << DataF.szXWND << std::endl << DataF.szYWND << std::endl << DataF.colorBack
-		<< std::endl << DataF.colorLine << std::endl << DataF.nameIcon;
+	sstr << DataF.N << std::endl << DataF.szXWND
+		<< std::endl << DataF.szYWND
+		<< std::endl << DataF.colorBack
+		<< std::endl << DataF.colorLine
+		<< std::endl << strlen(DataF.nameIcon)
+		<< std::endl << DataF.nameIcon;
 	std::string strStream = sstr.str();
 
 	HANDLE hFile = CreateFileW(
@@ -250,20 +269,24 @@ void WriteParamWinAPI() {
 		return;
 	}
 
-	char* buff = new char[strStream.length() + 1];
+	//char* buff = new char[strStream.length() + 1];
 	//buff[strStream.length() + 1] = '\0';
-	strcpy_s(buff, strStream.length() + 1, strStream.c_str());
+	//strcpy_s(buff, strStream.length() + 1, strStream.c_str());
 
-	WriteFile(hFile, buff, strStream.length() + 1, NULL, NULL);
+	WriteFile(hFile, strStream.c_str(), strStream.length(), NULL, NULL);
 
 	CloseHandle(hFile);
-	delete[]buff;
+	//delete[]buff;
 }
 
 void WriteParamMapping() {
 	std::stringstream sstr;
-	sstr << DataF.N << std::endl << DataF.szXWND << std::endl << DataF.szYWND << std::endl << DataF.colorBack
-		<< std::endl << DataF.colorLine << std::endl << DataF.nameIcon;
+	sstr << DataF.N << std::endl << DataF.szXWND
+		<< std::endl << DataF.szYWND
+		<< std::endl << DataF.colorBack
+		<< std::endl << DataF.colorLine
+		<< std::endl << strlen(DataF.nameIcon)
+		<< std::endl << DataF.nameIcon;
 	std::string strStream = sstr.str();
 
 	HANDLE hFile = CreateFileW(
@@ -321,9 +344,12 @@ void WriteParamMapping() {
 
 void WriteParamStream() {
 	std::ofstream fout(fname);
-	fout << DataF.N << '\n' << DataF.szXWND << '\n'
-		<< DataF.szYWND << '\n' << DataF.colorBack << '\n'
-		<< DataF.colorLine << '\n' << DataF.nameIcon;
+	fout << DataF.N << std::endl << DataF.szXWND
+		<< std::endl << DataF.szYWND
+		<< std::endl << DataF.colorBack
+		<< std::endl << DataF.colorLine
+		<< std::endl << strlen(DataF.nameIcon)
+		<< std::endl << DataF.nameIcon;
 	fout.close();
 }
 
@@ -458,7 +484,10 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 }
 
 void setStandartIcon() {
-	for (int i = 0; i < strlen(STANDART_ICON_NAME); i++) {
+	if (DataF.nameIcon != NULL) delete[] DataF.nameIcon;
+	DataF.lenIcon = strlen(STANDART_ICON_NAME);
+	DataF.nameIcon = new char[DataF.lenIcon + 1];
+	for (int i = 0; i < DataF.lenIcon + 1; i++) {
 		DataF.nameIcon[i] = STANDART_ICON_NAME[i];
 	}
 }
@@ -557,6 +586,7 @@ int main(int argc, char* argv[])
 		delete[]haveEll[i];
 	}
 	delete[]haveEll;
+	delete[]DataF.nameIcon;
 	DeleteObject(hBrush);
 	DeleteObject(hBrushEll);
 	UnregisterClass(szWinClass, hThisInstance);
