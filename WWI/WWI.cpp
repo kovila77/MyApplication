@@ -131,13 +131,17 @@ int read_JPEG_file(const char* filename)
 		jpeg_read_scanlines(&cinfo, buffer, 1);
 		/* Assume put_scanline_someplace wants a pointer and sample count. */
 
-		for (int i = 0; i < row_stride; i++) {
-			myPixels[tek] = (buffer[0][i]);
-			tek++;
-			if (((i+1)%3) == 0) {
+		for (int i = 0; i < row_stride/3; i++) {
+			if ((i % 3) == 0) {
 				myPixels[tek] = '1';
 				tek++;
 			}
+			myPixels[tek] = (buffer[0][i+2]);
+			tek++;
+			myPixels[tek] = (buffer[0][i+1]);
+			tek++;
+			myPixels[tek] = (buffer[0][i]);
+			tek++;
 		}
 
 		//put_scanline_someplace(buffer[0], );

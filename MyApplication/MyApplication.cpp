@@ -388,7 +388,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 	switch (message) {
 	case WM_DESTROY: {
 		//Актуализация размеров окна
-		RECT tmpWR = {0};
+		RECT tmpWR = { 0 };
 		GetWindowRect(hwnd, &tmpWR);
 		DataF.szXWNDCreated = tmpWR.right - tmpWR.left;
 		DataF.szYWNDCreated = tmpWR.bottom - tmpWR.top;
@@ -400,6 +400,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hwnd, &ps);
 		GetClientRect(hwnd, &ps.rcPaint);
+		HBITMAP hBitmap = CreateBitmap(100, 100, 1, 32, (myImage.buff));
 
 		HGDIOBJ tempPen = SelectObject(hdc, (HGDIOBJ)lPen);
 
@@ -428,8 +429,18 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 					Ellipse(hdc, stepX * i, stepY * j, stepX * i + stepX, stepY * j + stepY);
 				}
 
+		//PatBlt(hdc, 0, 0, 10, 10, WHITENESS);
+		//PatBlt(hdc, xDest, yDest, xWidth, yHeight, dwROP);
+		//HDC hdcTMP = CreateDC(pszDriver, pszDevice, pszOutput, pData);
+		HDC hdcTMP = CreateCompatibleDC(hdc);
+		SelectObject(hdcTMP, hBitmap);
+		//BitBlt(hdc, 0, 0, 100, 100, hdcTMP, 0, 0, SRCCOPY);
+		TransparentBlt(hdc, 0, 0, 100, 100, hdcTMP, 0, 0, 100, 100, RGB(0, 0, 0));
+		DeleteDC(hdcTMP);
+
 		SelectObject(hdc, tempPen);
 		EndPaint(hwnd, &ps);
+		DeleteObject(hBitmap);
 		break;
 	}
 	case WM_LBUTTONDOWN: {
