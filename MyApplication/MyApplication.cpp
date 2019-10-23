@@ -41,6 +41,12 @@ struct loadData {
 } DataF;
 bool** haveEll;
 
+struct myImg {
+	unsigned char* buff;
+	int width;
+	int height;
+} myImage;
+
 
 bool ReadParamFdoing() {
 	FILE* stream;
@@ -508,12 +514,26 @@ void setTypeIO(const char* arg) {
 			}
 }
 
+void loadImage() {
+	HMODULE hLib;
+	hLib = LoadLibraryA("WWI.dll");
+	if (hLib == NULL) return;
+
+	unsigned char* (*load_image)(const char* filename, int& width, int& height);
+	(FARPROC&)load_image = GetProcAddress(hLib, "load_image");
+	myImage.buff = (*load_image)("1.jpg", myImage.width, myImage.height);
+
+	FreeLibrary(hLib);
+}
+
 int main(int argc, char* argv[])
 {
 	if (argc > 1)
 		setTypeIO(argv[1]);
 
 	if (!ReadParam()) setStandartIcon();
+
+	loadImage();
 
 	BOOL bMessageOk;
 	MSG message;
@@ -588,6 +608,7 @@ int main(int argc, char* argv[])
 	DeleteObject(hBrush);
 	DeleteObject(hBrushEll);
 	UnregisterClass(szWinClass, hThisInstance);
+	delete myImage.buff;
 
 	return 0;
 }
