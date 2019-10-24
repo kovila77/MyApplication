@@ -45,7 +45,7 @@ int read_JPEG_file(const char* filename)
 	/* More stuff */
 	FILE* infile;		/* source file */
 	JSAMPARRAY buffer;		/* Output row buffer */
-	int row_stride;		/* physical row width in output buffer */
+//	int row_stride;		/* physical row width in output buffer */
 	//int column_stride;
 
 	/* In this example we want to open the input file before doing anything else,
@@ -109,9 +109,9 @@ int read_JPEG_file(const char* filename)
 	  * In this example, we need to make an output work buffer of the right size.
 	  */
 	  /* JSAMPLEs per row in output buffer */
-	row_stride = cinfo.output_width * cinfo.output_components;
+	//row_stride = cinfo.output_width * cinfo.output_components;
 	/* Make a one-row-high sample array that will go away when done with image */
-	buffer = (*cinfo.mem->alloc_sarray)((j_common_ptr)&cinfo, JPOOL_IMAGE, row_stride, 1);
+	buffer = (*cinfo.mem->alloc_sarray)((j_common_ptr)&cinfo, JPOOL_IMAGE, cinfo.output_width * cinfo.output_components, 1);
 
 	Iwidth = cinfo.output_width;
 	Iheight = cinfo.output_height;
@@ -131,16 +131,14 @@ int read_JPEG_file(const char* filename)
 		jpeg_read_scanlines(&cinfo, buffer, 1);
 		/* Assume put_scanline_someplace wants a pointer and sample count. */
 
-		for (int i = 0; i < row_stride/3; i++) {
-			if ((i % 3) == 0) {
-				myPixels[tek] = '1';
-				tek++;
-			}
-			myPixels[tek] = (buffer[0][i+2]);
+		for (int i = 0; i < cinfo.output_width; i++) {
+			myPixels[tek] = 0;
 			tek++;
-			myPixels[tek] = (buffer[0][i+1]);
+			myPixels[tek] = (buffer[0][i*3 + 2]);
 			tek++;
-			myPixels[tek] = (buffer[0][i]);
+			myPixels[tek] = (buffer[0][i*3 + 1]);
+			tek++;
+			myPixels[tek] = (buffer[0][i*3 + 0]);
 			tek++;
 		}
 

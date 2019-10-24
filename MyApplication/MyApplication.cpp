@@ -12,6 +12,7 @@
 #define TMAPPING 2
 #define TWINAPI 3
 #define TSTREAMIO 4
+#define NAME_MY_DLL "WWI.dll"
 
 int TYPE_OF_IO = TPSTREAM;
 const wchar_t* fname = _T("Param.dat");
@@ -400,7 +401,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hwnd, &ps);
 		GetClientRect(hwnd, &ps.rcPaint);
-		HBITMAP hBitmap = CreateBitmap(100, 100, 1, 32, (myImage.buff));
+		HBITMAP hBitmap = CreateBitmap(10, 10, 1, 32, (myImage.buff));
 
 		HGDIOBJ tempPen = SelectObject(hdc, (HGDIOBJ)lPen);
 
@@ -435,7 +436,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		HDC hdcTMP = CreateCompatibleDC(hdc);
 		SelectObject(hdcTMP, hBitmap);
 		//BitBlt(hdc, 0, 0, 100, 100, hdcTMP, 0, 0, SRCCOPY);
-		TransparentBlt(hdc, 0, 0, 100, 100, hdcTMP, 0, 0, 100, 100, RGB(0, 0, 0));
+		TransparentBlt(hdc, 0, 0, 10, 10, hdcTMP, 0, 0, 10, 10, RGB(0, 0, 0));
 		DeleteDC(hdcTMP);
 
 		SelectObject(hdc, tempPen);
@@ -527,12 +528,12 @@ void setTypeIO(const char* arg) {
 
 void loadImage() {
 	HMODULE hLib;
-	hLib = LoadLibraryA("WWI.dll");
+	hLib = LoadLibraryA(NAME_MY_DLL);
 	if (hLib == NULL) return;
 
 	unsigned char* (*load_image)(const char* filename, int& width, int& height);
 	(FARPROC&)load_image = GetProcAddress(hLib, "load_image");
-	myImage.buff = (*load_image)("1.jpg", myImage.width, myImage.height);
+	myImage.buff = (*load_image)("221.jpg", myImage.width, myImage.height); 
 
 	FreeLibrary(hLib);
 }
