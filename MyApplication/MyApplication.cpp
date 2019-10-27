@@ -21,7 +21,6 @@ const int HOTKEY__SHIFT_C__NOTEPAD = 15;
 const int HOTKEY__RETURN__CHANGE_COLOR = 16;
 const int HOTKEY__ESC__EXIT = 17;
 const int HOTKEY__CONTROL_Q__EXIT = 18;
-const char STANDART_ICON_NAME[] = "icon.ico";
 const TCHAR szWinClass[] = _T("Win32SampleApp");
 const TCHAR szWinName[] = _T("Win32SampleWindow");
 HWND hwnd;
@@ -37,8 +36,9 @@ struct loadData {
 	int szYWNDCreated = 240;
 	COLORREF colorBack = RGB(0, 0, 255);
 	COLORREF colorLine = RGB(255, 0, 0);
-	int lenIcon;
-	char* nameIcon;
+	int countIcon;
+	int* lenIcon;
+	char** nameIcons;
 } DataF;
 bool** haveEll;
 
@@ -70,10 +70,18 @@ bool ReadParamFdoing() {
 
 	sstr << buff;
 	sstr >> DataF.N >> DataF.szXWNDCreated >> DataF.szYWNDCreated >> DataF.colorBack
-		>> DataF.colorLine >> DataF.lenIcon;
-	DataF.nameIcon = new char[DataF.lenIcon + 1];
-	ZeroMemory(DataF.nameIcon, DataF.lenIcon + 1);
-	sstr >> DataF.nameIcon;
+		>> DataF.colorLine >> DataF.countIcon;
+	DataF.nameIcons = new char* [DataF.countIcon];
+	DataF.lenIcon = new int[DataF.countIcon];
+	for (int i = 0; i < DataF.countIcon; i++) {
+		sstr >> DataF.lenIcon[i];
+		DataF.nameIcons[i] = new char[DataF.lenIcon[i] + 1];
+		ZeroMemory(DataF.nameIcons[i], DataF.lenIcon[i] + 1);
+		sstr >> DataF.nameIcons[i];
+	}/*DataF.lenIcon;
+	DataF.nameIcons = new char[DataF.lenIcon + 1];
+	ZeroMemory(DataF.nameIcons, DataF.lenIcon + 1);
+	sstr >> DataF.nameIcons;*/
 
 	delete[] buff;
 	fclose(stream);
@@ -115,10 +123,18 @@ bool ReadParamWinAPI() {
 
 	sstr << buff;
 	sstr >> DataF.N >> DataF.szXWNDCreated >> DataF.szYWNDCreated >> DataF.colorBack
-		>> DataF.colorLine >> DataF.lenIcon;
-	DataF.nameIcon = new char[DataF.lenIcon + 1];
-	ZeroMemory(DataF.nameIcon, DataF.lenIcon + 1);
-	sstr >> DataF.nameIcon;
+		>> DataF.colorLine >> DataF.countIcon;
+	DataF.nameIcons = new char* [DataF.countIcon];
+	DataF.lenIcon = new int[DataF.countIcon];
+	for (int i = 0; i < DataF.countIcon; i++) {
+		sstr >> DataF.lenIcon[i];
+		DataF.nameIcons[i] = new char[DataF.lenIcon[i] + 1];
+		ZeroMemory(DataF.nameIcons[i], DataF.lenIcon[i] + 1);
+		sstr >> DataF.nameIcons[i];
+	} /*DataF.lenIcon;
+	DataF.nameIcons = new char[DataF.lenIcon + 1];
+	ZeroMemory(DataF.nameIcons, DataF.lenIcon + 1);
+	sstr >> DataF.nameIcons;*/
 
 	CloseHandle(hFile);
 	delete[]buff;
@@ -184,10 +200,18 @@ bool ReadParamMapping() {
 	sstr << dataPtr;
 
 	sstr >> DataF.N >> DataF.szXWNDCreated >> DataF.szYWNDCreated >> DataF.colorBack
-		>> DataF.colorLine >> DataF.lenIcon;
-	DataF.nameIcon = new char[DataF.lenIcon + 1];
-	ZeroMemory(DataF.nameIcon, DataF.lenIcon + 1);
-	sstr >> DataF.nameIcon;
+		>> DataF.colorLine >> DataF.countIcon;
+	DataF.nameIcons = new char* [DataF.countIcon];
+	DataF.lenIcon = new int[DataF.countIcon];
+	for (int i = 0; i < DataF.countIcon; i++) {
+		sstr >> DataF.lenIcon[i];
+		DataF.nameIcons[i] = new char[DataF.lenIcon[i] + 1];
+		ZeroMemory(DataF.nameIcons[i], DataF.lenIcon[i] + 1);
+		sstr >> DataF.nameIcons[i];
+	}
+	/*DataF.nameIcons = new char[DataF.lenIcon + 1];
+	ZeroMemory(DataF.nameIcons, DataF.lenIcon + 1);
+	sstr >> DataF.nameIcons;*/
 
 	UnmapViewOfFile(hViewOfFile);
 	CloseHandle(hMapping);
@@ -199,10 +223,15 @@ bool ReadParamStream() {
 	std::ifstream fin(fname);
 	if (!fin.is_open()) return false;
 	fin >> DataF.N >> DataF.szXWNDCreated >> DataF.szYWNDCreated >> DataF.colorBack
-		>> DataF.colorLine >> DataF.lenIcon;
-	DataF.nameIcon = new char[DataF.lenIcon + 1];
-	ZeroMemory(DataF.nameIcon, DataF.lenIcon + 1);
-	fin >> DataF.nameIcon;
+		>> DataF.colorLine >> DataF.countIcon;
+	DataF.nameIcons = new char* [DataF.countIcon];
+	DataF.lenIcon = new int[DataF.countIcon];
+	for (int i = 0; i < DataF.countIcon; i++) {
+		fin >> DataF.lenIcon[i];
+		DataF.nameIcons[i] = new char[DataF.lenIcon[i] + 1];
+		ZeroMemory(DataF.nameIcons[i], DataF.lenIcon[i] + 1);
+		fin >> DataF.nameIcons[i];
+	}
 	fin.close();
 	return 1;
 }
@@ -238,8 +267,16 @@ void WriteParamFdoing() {
 		<< std::endl << DataF.szYWNDCreated
 		<< std::endl << DataF.colorBack
 		<< std::endl << DataF.colorLine
-		<< std::endl << strlen(DataF.nameIcon)
-		<< std::endl << DataF.nameIcon;
+		<< std::endl << DataF.countIcon;
+	for (int i = 0; i < DataF.countIcon; i++) {
+		sstr << std::endl << strlen(DataF.nameIcons[i])
+			<< std::endl << DataF.nameIcons[i];
+	}
+	delete[] DataF.lenIcon;
+	for (int i = 0; i < DataF.countIcon; i++) {
+		delete[] DataF.nameIcons[i];
+	}
+	delete[] DataF.nameIcons;
 	std::string strStream = sstr.str();
 
 	fwrite(strStream.c_str(), 1, strStream.length(), stream);
@@ -253,8 +290,16 @@ void WriteParamWinAPI() {
 		<< std::endl << DataF.szYWNDCreated
 		<< std::endl << DataF.colorBack
 		<< std::endl << DataF.colorLine
-		<< std::endl << strlen(DataF.nameIcon)
-		<< std::endl << DataF.nameIcon;
+		<< std::endl << DataF.countIcon;
+	for (int i = 0; i < DataF.countIcon; i++) {
+		sstr << std::endl << strlen(DataF.nameIcons[i])
+			<< std::endl << DataF.nameIcons[i];
+	}
+	delete[] DataF.lenIcon;
+	for (int i = 0; i < DataF.countIcon; i++) {
+		delete[] DataF.nameIcons[i];
+	}
+	delete[] DataF.nameIcons;
 	std::string strStream = sstr.str();
 
 	HANDLE hFile = CreateFileW(
@@ -282,8 +327,16 @@ void WriteParamMapping() {
 		<< std::endl << DataF.szYWNDCreated
 		<< std::endl << DataF.colorBack
 		<< std::endl << DataF.colorLine
-		<< std::endl << strlen(DataF.nameIcon)
-		<< std::endl << DataF.nameIcon;
+		<< std::endl << DataF.countIcon;
+	for (int i = 0; i < DataF.countIcon; i++) {
+		sstr << std::endl << strlen(DataF.nameIcons[i])
+			<< std::endl << DataF.nameIcons[i];
+	}
+	delete[] DataF.lenIcon;
+	for (int i = 0; i < DataF.countIcon; i++) {
+		delete[] DataF.nameIcons[i];
+	}
+	delete[] DataF.nameIcons;
 	std::string strStream = sstr.str();
 
 	HANDLE hFile = CreateFileW(
@@ -345,8 +398,16 @@ void WriteParamStream() {
 		<< std::endl << DataF.szYWNDCreated
 		<< std::endl << DataF.colorBack
 		<< std::endl << DataF.colorLine
-		<< std::endl << strlen(DataF.nameIcon)
-		<< std::endl << DataF.nameIcon;
+		<< std::endl << DataF.countIcon;
+	for (int i = 0; i < DataF.countIcon; i++) {
+		fout << std::endl << strlen(DataF.nameIcons[i])
+			<< std::endl << DataF.nameIcons[i];
+	}
+	delete[] DataF.lenIcon;
+	for (int i = 0; i < DataF.countIcon; i++) {
+		delete[] DataF.nameIcons[i];
+	}
+	delete[] DataF.nameIcons;
 	fout.close();
 }
 
@@ -497,15 +558,6 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 	return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
-void setStandartIcon() {
-	if (DataF.nameIcon != NULL) delete[] DataF.nameIcon;
-	DataF.lenIcon = strlen(STANDART_ICON_NAME);
-	DataF.nameIcon = new char[DataF.lenIcon + 1];
-	for (int i = 0; i < DataF.lenIcon + 1; i++) {
-		DataF.nameIcon[i] = STANDART_ICON_NAME[i];
-	}
-}
-
 void setTypeIO(const char* arg) {
 	if (strcmp(arg, "-tp") == 0) {
 		TYPE_OF_IO = TPSTREAM;
@@ -533,7 +585,7 @@ void loadImage() {
 
 	unsigned char* (*load_image)(const char* filename, int& width, int& height);
 	(FARPROC&)load_image = GetProcAddress(hLib, "load_image");
-	myImage.buff = (*load_image)("221.jpg", myImage.width, myImage.height); 
+	myImage.buff = (*load_image)("221.jpg", myImage.width, myImage.height);
 
 	FreeLibrary(hLib);
 }
@@ -543,7 +595,7 @@ int main(int argc, char* argv[])
 	if (argc > 1)
 		setTypeIO(argv[1]);
 
-	if (!ReadParam()) setStandartIcon();
+	ReadParam();
 
 	loadImage();
 
@@ -616,7 +668,7 @@ int main(int argc, char* argv[])
 		delete[]haveEll[i];
 	}
 	delete[]haveEll;
-	delete[]DataF.nameIcon;
+	//delete[]DataF.nameIcons;
 	DeleteObject(hBrush);
 	DeleteObject(hBrushEll);
 	UnregisterClass(szWinClass, hThisInstance);
