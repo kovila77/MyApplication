@@ -521,6 +521,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 							hdcTemp,
 							0, 0,
 							SRCCOPY);*/
+						BLENDFUNCTION b = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
 						/*TransparentBlt(
 							hdc, 
 							stepX * i, stepY * j, 
@@ -529,7 +530,6 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 							0, 0, 
 							myImages[ellHelp.TypeEll[i][j]].width, myImages[ellHelp.TypeEll[i][j]].height,
 							RGB(0, 0, 0));*/
-						BLENDFUNCTION b = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
 						AlphaBlend(
 							hdc,
 							stepX * i, stepY * j,

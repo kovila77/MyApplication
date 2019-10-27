@@ -33,20 +33,14 @@ void my_error_exit(j_common_ptr cinfo)
 
 FILE* infile;
 
-int read_PNG_file(const char* filename) {
-	std::cout << 'f' << std::endl;
+int read_PNG_file() {
 	int sig_read = 0;
 	png_structp png_ptr;
 	png_infop info_ptr;
 	png_uint_32 width, height;
 	int bit_depth, color_type, interlace_type;
 
-	fopen_s(&infile, filename, "rb");
 
-	if (infile == NULL) {
-		//std::cout << "can't open %s" << std::endl;
-		return 0;
-	}
 	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
 		NULL, NULL, NULL);
 
@@ -129,7 +123,7 @@ int read_PNG_file(const char* filename) {
 	png_read_end(png_ptr, info_ptr);
 	int tek = 0;
 	for (int j = 0; j < height; j++) {
-		for (int i = 0; i < width*4; i++) {
+		for (int i = 0; i < width * 4; i++) {
 			myPixels[tek] = row_pointers[j][i];
 			tek++;
 			/*myPixels[tek] = (buffer[0][i * 3 + 2]);
@@ -149,22 +143,17 @@ int read_PNG_file(const char* filename) {
 
 	png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 
-	fclose(infile);
+	//fclose(infile);
 
 	delete[] row_pointers;
 	return 1;
 }
 
-int read_JPEG_file(const char* filename)
+int read_JPEG_file()
 {
 	struct jpeg_decompress_struct cinfo;
 	struct my_error_mgr jerr;
 	JSAMPARRAY buffer;
-	fopen_s(&infile, filename, "rb");
-	if (infile == NULL) {
-		std::cout << "can't open %s" << std::endl;
-		return 0;
-	}
 	cinfo.err = jpeg_std_error(&jerr.pub);
 	jerr.pub.error_exit = my_error_exit;
 	if (setjmp(jerr.setjmp_buffer)) {
@@ -202,17 +191,37 @@ int read_JPEG_file(const char* filename)
 	/*(void)*/jpeg_finish_decompress(&cinfo);
 	jpeg_destroy_decompress(&cinfo);
 
-	fclose(infile);
+	//fclose(infile);
 
 	return 1;
 }
 
 unsigned char* load_image(const char* filename, int& width, int& height) {
-	if (read_PNG_file(filename)) {
-		width = Iwidth;
-		height = Iheight;
-		return myPixels;
-	}
-	else
+	fopen_s(&infile, filename, "rb");
+	if (infile == NULL) {
+		std::cout << "can't open " << filename << std::endl;
 		return NULL;
+	}
+
+	if (strlen(filename) > 3 && filename[strlen(filename) - 1] == 'g'
+		&& filename[strlen(filename) - 2] == 'n'
+		&& filename[strlen(filename) - 3] == 'p'
+		&& filename[strlen(filename) - 4] == '.') {
+		if (read_PNG_file()) {
+			width = Iwidth;
+			height = Iheight;
+			fclose(infile);
+			return myPixels;
+		}
+	}
+	else {
+		if (read_JPEG_file()) {
+			width = Iwidth;
+			height = Iheight;
+			fclose(infile);
+			return myPixels;
+		}
+	}
+	fclose(infile);
+	return NULL;
 }
