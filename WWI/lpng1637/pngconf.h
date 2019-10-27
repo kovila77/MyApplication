@@ -1,9 +1,9 @@
 
-/* pngconf.h - machine-configurable file for libpng
+/* pngconf.h - machine configurable file for libpng
  *
- * libpng version 1.6.37
+ * libpng version 1.6.36
  *
- * Copyright (c) 2018-2019 Cosmin Truta
+ * Copyright (c) 2018 Cosmin Truta
  * Copyright (c) 1998-2002,2004,2006-2016,2018 Glenn Randers-Pehrson
  * Copyright (c) 1996-1997 Andreas Dilger
  * Copyright (c) 1995-1996 Guy Eric Schalnat, Group 42, Inc.
@@ -181,7 +181,8 @@
  * conventions of the various functions.
  */
 #if defined(_Windows) || defined(_WINDOWS) || defined(WIN32) ||\
-    defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
+    defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__) ||\
+	defined(__EMSCRIPTEN__)
   /* Windows system (DOS doesn't support DLLs).  Includes builds under Cygwin or
    * MinGW on any architecture currently supported by Windows.  Also includes
    * Watcom builds but these need special treatment because they are not
@@ -223,7 +224,12 @@
 #     error "PNG_USER_PRIVATEBUILD must be defined if PNGAPI is changed"
 #  endif
 
-#  if (defined(_MSC_VER) && _MSC_VER < 800) ||\
+#ifdef __EMSCRIPTEN__
+#    define PNG_DLL_EXPORT
+#    ifndef PNG_DLL_IMPORT
+#      define PNG_DLL_IMPORT 
+#    endif
+#elif (defined(_MSC_VER) && _MSC_VER < 800) ||\
       (defined(__BORLANDC__) && __BORLANDC__ < 0x500)
    /* older Borland and MSC
     * compilers used '__export' and required this to be after

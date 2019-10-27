@@ -36,17 +36,28 @@ struct loadData {
 	int szYWNDCreated = 240;
 	COLORREF colorBack = RGB(0, 0, 255);
 	COLORREF colorLine = RGB(255, 0, 0);
-	int countIcon;
+	int countIcon = 0;
+	int RCountIcon = 0;
 	int* lenIcon;
 	char** nameIcons;
 } DataF;
-bool** haveEll;
+struct tabaleHelp {
+	bool** haveEll;
+	int** TypeEll;
+} ellHelp;
 
-struct myImg {
-	unsigned char* buff;
+struct img{
+	HBITMAP bm;
 	int width;
 	int height;
-} myImage;
+};
+img* myImages;
+
+//struct myImg {
+//	unsigned char* buff;
+//	int width;
+//	int height;
+//} myImage;
 
 
 bool ReadParamFdoing() {
@@ -462,7 +473,6 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hwnd, &ps);
 		GetClientRect(hwnd, &ps.rcPaint);
-		HBITMAP hBitmap = CreateBitmap(10, 10, 1, 32, (myImage.buff));
 
 		HGDIOBJ tempPen = SelectObject(hdc, (HGDIOBJ)lPen);
 
@@ -470,6 +480,69 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		double positionX = stepX;
 		double stepY = ps.rcPaint.bottom / (double)(DataF.N + 1);
 		double positionY = stepY;
+		
+
+		if (xElipse > 0 && stepX != 0 && stepY != 0) {
+			int i = (int)(xElipse / stepX);
+			int j = (int)(yElipse / stepY);
+			ellHelp.haveEll[i][j] = !ellHelp.haveEll[i][j];
+			if (DataF.RCountIcon != 0) {
+				ellHelp.TypeEll[i][j] = rand() % DataF.countIcon;
+
+			}
+			xElipse = yElipse = -1;
+		}
+
+		if (DataF.RCountIcon == 0) {
+			SelectObject(hdc, hBrushEll);
+			for (int i = 0; i < DataF.N + 1; i++)
+				for (int j = 0; j < DataF.N + 1; j++)
+					if (ellHelp.haveEll[i][j] && stepX != 0 && stepY != 0) {
+						Ellipse(hdc, stepX * i, stepY * j, stepX * i + stepX, stepY * j + stepY);
+					}
+			SelectObject(hdc, hBrush);
+		}
+		else {
+			//PatBlt(hdc, 0, 0, 10, 10, WHITENESS);
+			//PatBlt(hdc, xDest, yDest, xWidth, yHeight, dwROP);
+			//HDC hdcTMP = CreateDC(pszDriver, pszDevice, pszOutput, pData);
+			
+			//SetMapMode(hdcTemp, GetMapMode(hdc));
+
+			for (int i = 0; i < DataF.N + 1; i++)
+				for (int j = 0; j < DataF.N + 1; j++)
+					if (ellHelp.haveEll[i][j] && stepX != 0 && stepY != 0) {
+						//Ellipse(hdc, stepX * i, stepY * j, stepX * i + stepX, stepY * j + stepY);
+						HDC hdcTemp = CreateCompatibleDC(hdc);
+						SelectObject(hdcTemp, myImages[ellHelp.TypeEll[i][j]].bm);
+						/*BitBlt(hdc,
+							stepX * i, stepY * j,
+							stepX * i + stepX - stepX * i, stepY * j + stepY - stepY * j,
+							hdcTemp,
+							0, 0,
+							SRCCOPY);*/
+						/*TransparentBlt(
+							hdc, 
+							stepX * i, stepY * j, 
+							stepX * i + stepX - stepX * i, stepY * j + stepY - stepY * j,
+							hdcTemp, 
+							0, 0, 
+							myImages[ellHelp.TypeEll[i][j]].width, myImages[ellHelp.TypeEll[i][j]].height,
+							RGB(0, 0, 0));*/
+						BLENDFUNCTION b = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
+						AlphaBlend(
+							hdc,
+							stepX * i, stepY * j,
+							stepX * i + stepX - stepX * i, stepY * j + stepY - stepY * j,
+							hdcTemp,
+							0, 0,
+							myImages[ellHelp.TypeEll[i][j]].width, myImages[ellHelp.TypeEll[i][j]].height,
+							b);
+						DeleteDC(hdcTemp);
+					}
+			
+		}
+
 		for (int i = 0; i < DataF.N; i++) {
 			MoveToEx(hdc, positionX, 0, NULL);
 			LineTo(hdc, positionX, ps.rcPaint.bottom);
@@ -479,30 +552,9 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 			positionY += stepY;
 		}
 
-		if (xElipse > 0 && stepX != 0 && stepY != 0) {
-			haveEll[(int)(xElipse / stepX)][(int)(yElipse / stepY)] = !haveEll[(int)(xElipse / stepX)][(int)(yElipse / stepY)];
-			xElipse = yElipse = -1;
-		}
-
-		SelectObject(hdc, hBrushEll);
-		for (int i = 0; i < DataF.N + 1; i++)
-			for (int j = 0; j < DataF.N + 1; j++)
-				if (haveEll[i][j] && stepX != 0 && stepY != 0) {
-					Ellipse(hdc, stepX * i, stepY * j, stepX * i + stepX, stepY * j + stepY);
-				}
-
-		//PatBlt(hdc, 0, 0, 10, 10, WHITENESS);
-		//PatBlt(hdc, xDest, yDest, xWidth, yHeight, dwROP);
-		//HDC hdcTMP = CreateDC(pszDriver, pszDevice, pszOutput, pData);
-		HDC hdcTMP = CreateCompatibleDC(hdc);
-		SelectObject(hdcTMP, hBitmap);
-		//BitBlt(hdc, 0, 0, 100, 100, hdcTMP, 0, 0, SRCCOPY);
-		TransparentBlt(hdc, 0, 0, 10, 10, hdcTMP, 0, 0, 10, 10, RGB(0, 0, 0));
-		DeleteDC(hdcTMP);
-
 		SelectObject(hdc, tempPen);
 		EndPaint(hwnd, &ps);
-		DeleteObject(hBitmap);
+		//DeleteObject(hBitmapImage);
 		break;
 	}
 	case WM_LBUTTONDOWN: {
@@ -580,12 +632,27 @@ void setTypeIO(const char* arg) {
 
 void loadImage() {
 	HMODULE hLib;
+	myImages = new img[DataF.countIcon];
 	hLib = LoadLibraryA(NAME_MY_DLL);
-	if (hLib == NULL) return;
+	if (hLib == NULL) { std::cout << "cant open LIB" << std::endl; return; }
+
+	unsigned char* buff;
+	int width;
+	int height;
 
 	unsigned char* (*load_image)(const char* filename, int& width, int& height);
 	(FARPROC&)load_image = GetProcAddress(hLib, "load_image");
-	myImage.buff = (*load_image)("221.jpg", myImage.width, myImage.height);
+
+	for (int i = 0; i < DataF.countIcon; i++) {
+		buff = (*load_image)(DataF.nameIcons[i], width, height);
+		if (buff != NULL) {
+			myImages[DataF.RCountIcon].bm = CreateBitmap(width, height, 1, 32, buff);
+			myImages[DataF.RCountIcon].width = width;
+			myImages[DataF.RCountIcon].height = height;
+			DataF.RCountIcon++;
+			delete buff;
+		}
+	}
 
 	FreeLibrary(hLib);
 }
@@ -606,15 +673,18 @@ int main(int argc, char* argv[])
 
 	hBrush = CreateSolidBrush(DataF.colorBack);
 	hBrushEll = CreateSolidBrush(COLOR_ELLIPS);
-	lPen = CreatePen(PS_SOLID, 1, DataF.colorLine);
+	lPen = CreatePen(PS_SOLID, 3, DataF.colorLine);
 
-	haveEll = new bool* [DataF.N + 1];
+	ellHelp.haveEll = new bool* [DataF.N + 1];
+	ellHelp.TypeEll = new int* [DataF.N + 1];
 	for (int i = 0; i < DataF.N + 1; i++) {
-		haveEll[i] = new bool[DataF.N + 1];
+		ellHelp.haveEll[i] = new bool[DataF.N + 1];
+		ellHelp.TypeEll[i] = new int[DataF.N + 1];
 	}
 	for (int i = 0; i < DataF.N + 1; i++) {
 		for (int j = 0; j < DataF.N + 1; j++) {
-			haveEll[i][j] = false;
+			ellHelp.haveEll[i][j] = false;
+			//ellHelp.TypeEll[i][j] = 0;
 		}
 	}
 
@@ -664,15 +734,45 @@ int main(int argc, char* argv[])
 	//WriteParam();
 	DestroyWindow(hwnd);
 	WriteParam();
-	for (int i = 0; i < DataF.N + 1; i++) {
-		delete[]haveEll[i];
+
+	for (int i = 0; i < DataF.RCountIcon; i++) {
+		DeleteObject(myImages[i].bm);
 	}
-	delete[]haveEll;
+	delete[] myImages;
+
+	for (int i = 0; i < DataF.N + 1; i++) {
+		delete[]ellHelp.haveEll[i];
+		delete[]ellHelp.TypeEll[i];
+	}
+	delete[]ellHelp.haveEll;
+	delete[]ellHelp.TypeEll;
 	//delete[]DataF.nameIcons;
 	DeleteObject(hBrush);
 	DeleteObject(hBrushEll);
 	UnregisterClass(szWinClass, hThisInstance);
-	delete myImage.buff;
 
 	return 0;
 }
+
+//void DrawBitmap(HDC hdc, HBITMAP hBitmap, int xStart, int yStart)
+//{
+//	BITMAP bm;
+//	HDC hdcMem;
+//	DWORD dwSize;
+//	POINT ptSize, ptOrg;
+//	hdcMem = CreateCompatibleDC(hdc);
+//	SelectObject(hdcMem, hBitmap);
+//	SetMapMode(hdcMem, GetMapMode(hdc));
+//	GetObject(hBitmap, sizeof(BITMAP), (LPVOID)&bm);
+//	ptSize.x = bm.bmWidth;
+//	ptSize.y = bm.bmHeight;
+//	DPtoLP(hdc, &ptSize, 1);
+//	ptOrg.x = 0;
+//	ptOrg.y = 0;
+//	DPtoLP(hdcMem, &ptOrg, 1);
+//	BitBlt(
+//		hdc, xStart, yStart, ptSize.x, ptSize.y,
+//		hdcMem, ptOrg.x, ptOrg.y, SRCCOPY
+//	);
+//	DeleteDC(hdcMem);
+//}

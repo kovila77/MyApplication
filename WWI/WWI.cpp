@@ -31,149 +31,184 @@ void my_error_exit(j_common_ptr cinfo)
 	longjmp(myerr->setjmp_buffer, 1);
 }
 
+FILE* infile;
+
+int read_PNG_file(const char* filename) {
+	std::cout << 'f' << std::endl;
+	int sig_read = 0;
+	png_structp png_ptr;
+	png_infop info_ptr;
+	png_uint_32 width, height;
+	int bit_depth, color_type, interlace_type;
+
+	fopen_s(&infile, filename, "rb");
+
+	if (infile == NULL) {
+		//std::cout << "can't open %s" << std::endl;
+		return 0;
+	}
+	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
+		NULL, NULL, NULL);
+
+	//png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
+	//	png_voidp user_error_ptr, user_error_fn, user_warning_fn);
+
+	if (png_ptr == NULL)
+	{
+		fclose(infile);
+		return 0;
+	}
+
+	info_ptr = png_create_info_struct(png_ptr);
+	if (info_ptr == NULL)
+	{
+		fclose(infile);
+		png_destroy_read_struct(&png_ptr, NULL, NULL);
+		return 0;
+	}
+
+	//if (setjmp(png_jmpbuf(png_ptr)))
+	//{
+	//	/* Free all of the memory associated with the png_ptr and info_ptr */
+	//	png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+	//	fclose(infile);
+	//	/* If we get here, we had a problem reading the file */
+	//	return 0;
+	//}
+
+	png_init_io(png_ptr, infile);
+
+	png_read_info(png_ptr, info_ptr);
+
+	png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type,
+		&interlace_type, NULL, NULL);
+
+	// Read any color_type into 8bit depth, RGBA format.
+
+	if (bit_depth == 16)
+		png_set_strip_16(png_ptr);
+
+	if (color_type == PNG_COLOR_TYPE_PALETTE)
+		png_set_palette_to_rgb(png_ptr);
+
+	// PNG_COLOR_TYPE_GRAY_ALPHA is always 8 or 16bit depth.
+	if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
+		png_set_expand_gray_1_2_4_to_8(png_ptr);
+
+	if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
+		png_set_tRNS_to_alpha(png_ptr);
+
+	// These color_type don't have an alpha channel then fill it with 0xff.
+	if (color_type == PNG_COLOR_TYPE_RGB ||
+		color_type == PNG_COLOR_TYPE_GRAY ||
+		color_type == PNG_COLOR_TYPE_PALETTE)
+		png_set_filler(png_ptr, 0xFF, PNG_FILLER_AFTER);
+
+	if (color_type == PNG_COLOR_TYPE_GRAY ||
+		color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+		png_set_gray_to_rgb(png_ptr);
+
+	if (color_type & PNG_COLOR_MASK_COLOR)
+		png_set_bgr(png_ptr);
+
+	png_read_update_info(png_ptr, info_ptr);
+
+
+	png_bytep* row_pointers;
+	row_pointers = new png_bytep[height];
+
+	/* Clear the pointer array */
+	for (int row = 0; row < height; row++)
+		row_pointers[row] = NULL;
+
+	for (int row = 0; row < height; row++)
+		row_pointers[row] = (png_bytep)png_malloc(png_ptr, png_get_rowbytes(png_ptr, info_ptr));
+
+	png_read_image(png_ptr, row_pointers);
+	myPixels = new unsigned char[width * bit_depth * height];
+	png_read_end(png_ptr, info_ptr);
+	int tek = 0;
+	for (int j = 0; j < height; j++) {
+		for (int i = 0; i < width*4; i++) {
+			myPixels[tek] = row_pointers[j][i];
+			tek++;
+			/*myPixels[tek] = (buffer[0][i * 3 + 2]);
+			tek++;
+			myPixels[tek] = (buffer[0][i * 3 + 1]);
+			tek++;
+			myPixels[tek] = (buffer[0][i * 3 + 0]);
+			tek++;
+			myPixels[tek] = 255;
+			tek++;*/
+		}
+
+		//put_scanline_someplace(buffer[0], );
+	}
+	Iheight = height;
+	Iwidth = width;
+
+	png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+
+	fclose(infile);
+
+	delete[] row_pointers;
+	return 1;
+}
+
 int read_JPEG_file(const char* filename)
 {
-	/* This struct contains the JPEG decompression parameters and pointers to
-	 * working space (which is allocated as needed by the JPEG library).
-	 */
 	struct jpeg_decompress_struct cinfo;
-	/* We use our private extension JPEG error handler.
-	 * Note that this struct must live as long as the main JPEG parameter
-	 * struct, to avoid dangling-pointer problems.
-	 */
 	struct my_error_mgr jerr;
-	/* More stuff */
-	FILE* infile;		/* source file */
-	JSAMPARRAY buffer;		/* Output row buffer */
-//	int row_stride;		/* physical row width in output buffer */
-	//int column_stride;
-
-	/* In this example we want to open the input file before doing anything else,
-	 * so that the setjmp() error recovery below can assume the file is open.
-	 * VERY IMPORTANT: use "b" option to fopen() if you are on a machine that
-	 * requires it in order to read binary files.
-	 */
+	JSAMPARRAY buffer;
 	fopen_s(&infile, filename, "rb");
 	if (infile == NULL) {
 		std::cout << "can't open %s" << std::endl;
 		return 0;
 	}
-
-	/* Step 1: allocate and initialize JPEG decompression object */
-
-	/* We set up the normal JPEG error routines, then override error_exit. */
 	cinfo.err = jpeg_std_error(&jerr.pub);
 	jerr.pub.error_exit = my_error_exit;
-	/* Establish the setjmp return context for my_error_exit to use. */
 	if (setjmp(jerr.setjmp_buffer)) {
-		/* If we get here, the JPEG code has signaled an error.
-		 * We need to clean up the JPEG object, close the input file, and return.
-		 */
 		jpeg_destroy_decompress(&cinfo);
 		fclose(infile);
 		return 0;
 	}
-	/* Now we can initialize the JPEG decompression object. */
 	jpeg_create_decompress(&cinfo);
-
-	/* Step 2: specify data source (eg, a file) */
-
 	jpeg_stdio_src(&cinfo, infile);
-
-	/* Step 3: read file parameters with jpeg_read_header() */
-
-	/*(void)*/jpeg_read_header(&cinfo, TRUE);
-	/* We can ignore the return value from jpeg_read_header since
-	 *   (a) suspension is not possible with the stdio data source, and
-	 *   (b) we passed TRUE to reject a tables-only JPEG file as an error.
-	 * See libjpeg.txt for more info.
-	 */
-
-	 /* Step 4: set parameters for decompression */
-
-	 /* In this example, we don't need to change any of the defaults set by
-	  * jpeg_read_header(), so we do nothing here.
-	  */
-
-	  /* Step 5: Start decompressor */
-
+	jpeg_read_header(&cinfo, TRUE);
 	/*(void)*/jpeg_start_decompress(&cinfo);
-	/* We can ignore the return value since suspension is not possible
-	 * with the stdio data source.
-	 */
-
-	 /* We may need to do some setup of our own at this point before reading
-	  * the data.  After jpeg_start_decompress() we have the correct scaled
-	  * output image dimensions available, as well as the output colormap
-	  * if we asked for color quantization.
-	  * In this example, we need to make an output work buffer of the right size.
-	  */
-	  /* JSAMPLEs per row in output buffer */
-	//row_stride = cinfo.output_width * cinfo.output_components;
-	/* Make a one-row-high sample array that will go away when done with image */
 	buffer = (*cinfo.mem->alloc_sarray)((j_common_ptr)&cinfo, JPOOL_IMAGE, cinfo.output_width * cinfo.output_components, 1);
 
 	Iwidth = cinfo.output_width;
 	Iheight = cinfo.output_height;
 
 	myPixels = new unsigned char[cinfo.output_width * 4 * cinfo.output_height];
-	/* Step 6: while (scan lines remain to be read) */
-	/*           jpeg_read_scanlines(...); */
 	int tek = 0;
-	/* Here we use the library's state variable cinfo.output_scanline as the
-	 * loop counter, so that we don't have to keep track ourselves.
-	 */
 	while (cinfo.output_scanline < cinfo.output_height) {
-		/* jpeg_read_scanlines expects an array of pointers to scanlines.
-		 * Here the array is only one element long, but you could ask for
-		 * more than one scanline at a time if that's more convenient.
-		 */
 		jpeg_read_scanlines(&cinfo, buffer, 1);
-		/* Assume put_scanline_someplace wants a pointer and sample count. */
 
 		for (int i = 0; i < cinfo.output_width; i++) {
-			myPixels[tek] = 0;
+			myPixels[tek] = (buffer[0][i * 3 + 2]);
 			tek++;
-			myPixels[tek] = (buffer[0][i*3 + 2]);
+			myPixels[tek] = (buffer[0][i * 3 + 1]);
 			tek++;
-			myPixels[tek] = (buffer[0][i*3 + 1]);
+			myPixels[tek] = (buffer[0][i * 3 + 0]);
 			tek++;
-			myPixels[tek] = (buffer[0][i*3 + 0]);
+			myPixels[tek] = 255;
 			tek++;
 		}
 
 		//put_scanline_someplace(buffer[0], );
 	}
-	//(void)jpeg_read_scanlines(&cinfo, buffer, 1);
-	/* Step 7: Finish decompression */
-
 	/*(void)*/jpeg_finish_decompress(&cinfo);
-	/* We can ignore the return value since suspension is not possible
-	 * with the stdio data source.
-	 */
-
-	 /* Step 8: Release JPEG decompression object */
-
-	 /* This is an important step since it will release a good deal of memory. */
 	jpeg_destroy_decompress(&cinfo);
 
-	/* After finish_decompress, we can close the input file.
-	 * Here we postpone it until after no more JPEG errors are possible,
-	 * so as to simplify the setjmp error logic above.  (Actually, I don't
-	 * think that jpeg_destroy can do an error exit, but why assume anything...)
-	 */
 	fclose(infile);
 
-	/* At this point you may want to check to see whether any corrupt-data
-	 * warnings occurred (test whether jerr.pub.num_warnings is nonzero).
-	 */
-
-	 /* And we're done! */
 	return 1;
 }
 
 unsigned char* load_image(const char* filename, int& width, int& height) {
-	if (read_JPEG_file(filename)) {
+	if (read_PNG_file(filename)) {
 		width = Iwidth;
 		height = Iheight;
 		return myPixels;
