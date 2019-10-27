@@ -487,7 +487,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 			int j = (int)(yElipse / stepY);
 			ellHelp.haveEll[i][j] = !ellHelp.haveEll[i][j];
 			if (DataF.RCountIcon != 0) {
-				ellHelp.TypeEll[i][j] = rand() % DataF.countIcon;
+				ellHelp.TypeEll[i][j] = rand() % DataF.RCountIcon;
 
 			}
 			xElipse = yElipse = -1;
