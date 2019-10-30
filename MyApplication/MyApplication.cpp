@@ -13,6 +13,8 @@
 #define TWINAPI 3
 #define TSTREAMIO 4
 #define NAME_MY_DLL "WWI.dll"
+#define NAME_MY_EVENT "WM_UPDATEDATA"
+#define BUF_SIZE 256
 
 int TYPE_OF_IO = TPSTREAM;
 const wchar_t* fname = _T("Param.dat");
@@ -23,12 +25,17 @@ const int HOTKEY__ESC__EXIT = 17;
 const int HOTKEY__CONTROL_Q__EXIT = 18;
 const TCHAR szWinClass[] = _T("Win32SampleApp");
 const TCHAR szWinName[] = _T("Win32SampleWindow");
+TCHAR szName[] = TEXT("MyFileMappingObject");
 HWND hwnd;
 HPEN lPen;
 HBRUSH hBrush;
 HBRUSH hBrushEll;
 int xElipse = -1;
 int yElipse = -1;
+int WM_UPDATEDATA = 0;
+
+HANDLE hMapFile;
+LPCTSTR pBuf;
 
 struct loadData {
 	int N = 3;
@@ -46,7 +53,7 @@ struct tabaleHelp {
 	int** TypeEll;
 } ellHelp;
 
-struct img{
+struct img {
 	HBITMAP bm;
 	int width;
 	int height;
@@ -458,6 +465,15 @@ void RunNotepad(void)
 
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	//std::cout << message << std::endl;
+	if (message == WM_UPDATEDATA) {
+		int* dataPtr = (int*)pBuf;
+		xElipse = dataPtr[0];
+		yElipse = dataPtr[1];
+		InvalidateRect(hwnd, NULL, true);
+		//char* dataPtr = (char*)pBuf;
+		//std::cout << "Oleg" << dataPtr[0] <<  std::endl;
+	}
 	switch (message) {
 	case WM_DESTROY: {
 		//Актуализация размеров окна
@@ -480,7 +496,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		double positionX = stepX;
 		double stepY = ps.rcPaint.bottom / (double)(DataF.N + 1);
 		double positionY = stepY;
-		
+
 
 		if (xElipse > 0 && stepX != 0 && stepY != 0) {
 			int i = (int)(xElipse / stepX);
@@ -506,7 +522,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 			//PatBlt(hdc, 0, 0, 10, 10, WHITENESS);
 			//PatBlt(hdc, xDest, yDest, xWidth, yHeight, dwROP);
 			//HDC hdcTMP = CreateDC(pszDriver, pszDevice, pszOutput, pData);
-			
+
 			//SetMapMode(hdcTemp, GetMapMode(hdc));
 
 			for (int i = 0; i < DataF.N + 1; i++)
@@ -523,11 +539,11 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 							SRCCOPY);*/
 						BLENDFUNCTION b = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
 						/*TransparentBlt(
-							hdc, 
-							stepX * i, stepY * j, 
+							hdc,
+							stepX * i, stepY * j,
 							stepX * i + stepX - stepX * i, stepY * j + stepY - stepY * j,
-							hdcTemp, 
-							0, 0, 
+							hdcTemp,
+							0, 0,
 							myImages[ellHelp.TypeEll[i][j]].width, myImages[ellHelp.TypeEll[i][j]].height,
 							RGB(0, 0, 0));*/
 						AlphaBlend(
@@ -540,7 +556,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 							b);
 						DeleteDC(hdcTemp);
 					}
-			
+
 		}
 
 		for (int i = 0; i < DataF.N; i++) {
@@ -558,9 +574,12 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		break;
 	}
 	case WM_LBUTTONDOWN: {
-		xElipse = GET_X_LPARAM(lParam);
-		yElipse = GET_Y_LPARAM(lParam);
+		int* dataPtr = (int*)pBuf;
+
+		dataPtr[0] = xElipse = GET_X_LPARAM(lParam);
+		dataPtr[1] = yElipse = GET_Y_LPARAM(lParam);
 		InvalidateRect(hwnd, NULL, true);
+		SendMessage(HWND_BROADCAST, WM_UPDATEDATA, NULL, NULL);
 		break;
 	}
 	case WM_HOTKEY: {
@@ -657,10 +676,150 @@ void loadImage() {
 	FreeLibrary(hLib);
 }
 
+//void SendMessage_WM_TIMER() {
+//	SendMessage(hwnd, WM_TIMER, NULL, NULL);
+//}
+
+//
+//bool ReadSlot()
+//{
+//	DWORD cbMessage, cMessage, cbRead;
+//	BOOL fResult;
+//	LPTSTR lpszBuffer;
+//	TCHAR achID[80];
+//	DWORD cAllMessages;
+//	HANDLE hEvent;
+//	OVERLAPPED ov;
+//
+//	cbMessage = cMessage = cbRead = 0;
+//
+//	hEvent = CreateEvent(NULL, FALSE, FALSE, TEXT("ExampleSlot"));
+//	if (NULL == hEvent)
+//		return FALSE;
+//	ov.Offset = 0;
+//	ov.OffsetHigh = 0;
+//	ov.hEvent = hEvent;
+//
+//	fResult = GetMailslotInfo(hSlot, // mailslot handle 
+//		(LPDWORD)NULL,               // no maximum message size 
+//		&cbMessage,                   // size of next message 
+//		&cMessage,                    // number of messages 
+//		(LPDWORD)NULL);              // no read time-out 
+//
+//	if (!fResult)
+//	{
+//		printf("GetMailslotInfo failed with %d.\n", GetLastError());
+//		return FALSE;
+//	}
+//
+//	if (cbMessage == MAILSLOT_NO_MESSAGE)
+//	{
+//		printf("Waiting for a message...\n");
+//		return TRUE;
+//	}
+//
+//	cAllMessages = cMessage;
+//
+//	while (cMessage != 0)  // retrieve all messages
+//	{
+//		// Create a message-number string. 
+//
+//		StringCchPrintf((LPTSTR)achID,
+//			80,
+//			TEXT("\nMessage #%d of %d\n"),
+//			cAllMessages - cMessage + 1,
+//			cAllMessages);
+//
+//		// Allocate memory for the message. 
+//
+//		lpszBuffer = (LPTSTR)GlobalAlloc(GPTR,
+//			lstrlen((LPTSTR)achID) * sizeof(TCHAR) + cbMessage);
+//		if (NULL == lpszBuffer)
+//			return FALSE;
+//		lpszBuffer[0] = '\0';
+//
+//		fResult = ReadFile(hSlot,
+//			lpszBuffer,
+//			cbMessage,
+//			&cbRead,
+//			&ov);
+//
+//		if (!fResult)
+//		{
+//			printf("ReadFile failed with %d.\n", GetLastError());
+//			GlobalFree((HGLOBAL)lpszBuffer);
+//			return FALSE;
+//		}
+//
+//		// Concatenate the message and the message-number string. 
+//
+//		StringCbCat(lpszBuffer,
+//			lstrlen((LPTSTR)achID) * sizeof(TCHAR) + cbMessage,
+//			(LPTSTR)achID);
+//
+//		// Display the message. 
+//
+//		_tprintf(TEXT("Contents of the mailslot: %s\n"), lpszBuffer);
+//
+//		GlobalFree((HGLOBAL)lpszBuffer);
+//
+//		fResult = GetMailslotInfo(hSlot,  // mailslot handle 
+//			(LPDWORD)NULL,               // no maximum message size 
+//			&cbMessage,                   // size of next message 
+//			&cMessage,                    // number of messages 
+//			(LPDWORD)NULL);              // no read time-out 
+//
+//		if (!fResult)
+//		{
+//			printf("GetMailslotInfo failed (%d)\n", GetLastError());
+//			return FALSE;
+//		}
+//	}
+//	CloseHandle(hEvent);
+//	return TRUE;
+//}
+
 int main(int argc, char* argv[])
 {
 	if (argc > 1)
 		setTypeIO(argv[1]);
+
+	WM_UPDATEDATA = RegisterWindowMessage((LPCWSTR)NAME_MY_EVENT);
+	if (WM_UPDATEDATA == 0) {
+		std::cout << "cant register window message" << std::endl; return 1;
+	}
+	hMapFile = OpenFileMapping(
+		FILE_MAP_ALL_ACCESS,   // read/write access
+		FALSE,                 // do not inherit the name
+		szName);               // name of mapping object
+	if (!hMapFile) {
+		hMapFile = CreateFileMapping(
+			INVALID_HANDLE_VALUE,    // use paging file
+			NULL,                    // default security
+			PAGE_READWRITE,          // read/write access
+			0,                       // maximum object size (high-order DWORD)
+			BUF_SIZE,                // maximum object size (low-order DWORD)
+			szName);                 // name of mapping object
+
+		if (hMapFile == NULL)
+		{
+			_tprintf(TEXT("Could not create file mapping object (%d).\n"),
+				GetLastError());
+			return 0;
+		}
+	}
+	pBuf = (LPTSTR)MapViewOfFile(hMapFile,   // handle to map object
+		FILE_MAP_ALL_ACCESS, // read/write permission
+		0,
+		0,
+		BUF_SIZE);
+	if (pBuf == NULL)
+	{
+		_tprintf(TEXT("Could not map view of file (%d).\n"),
+			GetLastError());
+		CloseHandle(hMapFile);
+		return 0;
+	}
 
 	ReadParam();
 
@@ -720,6 +879,7 @@ int main(int argc, char* argv[])
 	}
 
 	ShowWindow(hwnd, SW_SHOW);
+	//SetTimer(hwnd, NULL, TIMER_INTERVAL, (TIMERPROC)SendMessage_WM_TIMER);
 
 	while ((bMessageOk = GetMessage(&message, NULL, 0, 0)) != 0) {
 		if (bMessageOk == -1) {
@@ -749,30 +909,11 @@ int main(int argc, char* argv[])
 	//delete[]DataF.nameIcons;
 	DeleteObject(hBrush);
 	DeleteObject(hBrushEll);
+
+	UnmapViewOfFile(pBuf);
+	CloseHandle(hMapFile);
+
 	UnregisterClass(szWinClass, hThisInstance);
 
 	return 0;
 }
-
-//void DrawBitmap(HDC hdc, HBITMAP hBitmap, int xStart, int yStart)
-//{
-//	BITMAP bm;
-//	HDC hdcMem;
-//	DWORD dwSize;
-//	POINT ptSize, ptOrg;
-//	hdcMem = CreateCompatibleDC(hdc);
-//	SelectObject(hdcMem, hBitmap);
-//	SetMapMode(hdcMem, GetMapMode(hdc));
-//	GetObject(hBitmap, sizeof(BITMAP), (LPVOID)&bm);
-//	ptSize.x = bm.bmWidth;
-//	ptSize.y = bm.bmHeight;
-//	DPtoLP(hdc, &ptSize, 1);
-//	ptOrg.x = 0;
-//	ptOrg.y = 0;
-//	DPtoLP(hdcMem, &ptOrg, 1);
-//	BitBlt(
-//		hdc, xStart, yStart, ptSize.x, ptSize.y,
-//		hdcMem, ptOrg.x, ptOrg.y, SRCCOPY
-//	);
-//	DeleteDC(hdcMem);
-//}
