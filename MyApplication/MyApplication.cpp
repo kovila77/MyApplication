@@ -14,7 +14,6 @@
 #define TSTREAMIO 4
 #define NAME_MY_DLL "WWI.dll"
 #define NAME_MY_EVENT "WM_UPDATEDATA"
-#define BUF_SIZE 256
 
 int TYPE_OF_IO = TPSTREAM;
 const wchar_t* fname = _T("Param.dat");
@@ -65,6 +64,15 @@ img* myImages;
 //	int width;
 //	int height;
 //} myImage;
+
+
+void FreeDataF() {
+	delete[] DataF.lenIcon;
+	for (int i = 0; i < DataF.countIcon; i++) {
+		delete[] DataF.nameIcons[i];
+	}
+	delete[] DataF.nameIcons;
+}
 
 
 bool ReadParamFdoing() {
@@ -290,11 +298,7 @@ void WriteParamFdoing() {
 		sstr << std::endl << strlen(DataF.nameIcons[i])
 			<< std::endl << DataF.nameIcons[i];
 	}
-	delete[] DataF.lenIcon;
-	for (int i = 0; i < DataF.countIcon; i++) {
-		delete[] DataF.nameIcons[i];
-	}
-	delete[] DataF.nameIcons;
+	FreeDataF();
 	std::string strStream = sstr.str();
 
 	fwrite(strStream.c_str(), 1, strStream.length(), stream);
@@ -313,11 +317,7 @@ void WriteParamWinAPI() {
 		sstr << std::endl << strlen(DataF.nameIcons[i])
 			<< std::endl << DataF.nameIcons[i];
 	}
-	delete[] DataF.lenIcon;
-	for (int i = 0; i < DataF.countIcon; i++) {
-		delete[] DataF.nameIcons[i];
-	}
-	delete[] DataF.nameIcons;
+	FreeDataF();
 	std::string strStream = sstr.str();
 
 	HANDLE hFile = CreateFileW(
@@ -350,11 +350,7 @@ void WriteParamMapping() {
 		sstr << std::endl << strlen(DataF.nameIcons[i])
 			<< std::endl << DataF.nameIcons[i];
 	}
-	delete[] DataF.lenIcon;
-	for (int i = 0; i < DataF.countIcon; i++) {
-		delete[] DataF.nameIcons[i];
-	}
-	delete[] DataF.nameIcons;
+	FreeDataF();
 	std::string strStream = sstr.str();
 
 	HANDLE hFile = CreateFileW(
@@ -421,11 +417,7 @@ void WriteParamStream() {
 		fout << std::endl << strlen(DataF.nameIcons[i])
 			<< std::endl << DataF.nameIcons[i];
 	}
-	delete[] DataF.lenIcon;
-	for (int i = 0; i < DataF.countIcon; i++) {
-		delete[] DataF.nameIcons[i];
-	}
-	delete[] DataF.nameIcons;
+	FreeDataF();
 	fout.close();
 }
 
@@ -465,11 +457,25 @@ void RunNotepad(void)
 
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	//std::cout << message << std::endl;
+	std::cout << message << std::endl;
 	if (message == WM_UPDATEDATA) {
-		int* dataPtr = (int*)pBuf;
-		xElipse = dataPtr[0];
-		yElipse = dataPtr[1];
+		//int* dataPtr = (int*)pBuf;
+		//xElipse = dataPtr[0];
+		//yElipse = dataPtr[1];
+		bool* dataPtr1 = (bool*)pBuf;
+		int tmp = 0;
+		for (int i = 0; i < DataF.N + 1; i++) {
+			for (int j = 0; j < DataF.N + 1; j++) {
+				ellHelp.haveEll[i][j] = dataPtr1[tmp++];
+			}
+		}
+		int* dataPtr2 = (int*)pBuf;
+		for (int i = 0; i < DataF.N + 1; i++) {
+			for (int j = 0; j < DataF.N + 1; j++) {
+				ellHelp.TypeEll[i][j] = dataPtr2[tmp++];
+			}
+		}
+		//SendMessage(hwnd, WM_PAINT, NULL, NULL);
 		InvalidateRect(hwnd, NULL, true);
 		//char* dataPtr = (char*)pBuf;
 		//std::cout << "Oleg" << dataPtr[0] <<  std::endl;
@@ -498,16 +504,17 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		double positionY = stepY;
 
 
-		if (xElipse > 0 && stepX != 0 && stepY != 0) {
-			int i = (int)(xElipse / stepX);
-			int j = (int)(yElipse / stepY);
-			ellHelp.haveEll[i][j] = !ellHelp.haveEll[i][j];
-			if (DataF.RCountIcon != 0) {
-				ellHelp.TypeEll[i][j] = rand() % DataF.RCountIcon;
+		//if (xElipse > 0 && stepX != 0 && stepY != 0) {
+		//	int i = (int)(xElipse / stepX);
+		//	int j = (int)(yElipse / stepY);
+		//	ellHelp.haveEll[i][j] = !ellHelp.haveEll[i][j];
+		//	if (DataF.RCountIcon != 0) {
+		//		ellHelp.TypeEll[i][j] = rand() % DataF.RCountIcon;
 
-			}
-			xElipse = yElipse = -1;
-		}
+		//	}
+		//	xElipse = yElipse = -1;
+		//	//SendMessage(HWND_BROADCAST, WM_UPDATEDATA, NULL, NULL);
+		//}
 
 		if (DataF.RCountIcon == 0) {
 			SelectObject(hdc, hBrushEll);
@@ -574,10 +581,49 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		break;
 	}
 	case WM_LBUTTONDOWN: {
-		int* dataPtr = (int*)pBuf;
+		//int* dataPtr = (int*)pBuf;
+		xElipse = GET_X_LPARAM(lParam);
+		yElipse = GET_Y_LPARAM(lParam);
 
-		dataPtr[0] = xElipse = GET_X_LPARAM(lParam);
-		dataPtr[1] = yElipse = GET_Y_LPARAM(lParam);
+		RECT mR;
+
+		GetClientRect(hwnd, &mR);
+
+		double stepX = mR.right / (double)(DataF.N + 1);
+		double positionX = stepX;
+		double stepY = mR.bottom / (double)(DataF.N + 1);
+		double positionY = stepY;
+
+
+		if (xElipse > 0 && stepX != 0 && stepY != 0) {
+			int i = (int)(xElipse / stepX);
+			int j = (int)(yElipse / stepY);
+			ellHelp.haveEll[i][j] = !ellHelp.haveEll[i][j];
+			if (DataF.RCountIcon != 0) {
+				ellHelp.TypeEll[i][j] = rand() % DataF.RCountIcon;
+
+			}
+			xElipse = yElipse = -1;
+			
+		}
+
+		bool* dataPtr1 = (bool*)pBuf;
+		int tmp = 0;
+		for (int i = 0; i < DataF.N + 1; i++) {
+			for (int j = 0; j < DataF.N + 1; j++) {
+				dataPtr1[tmp++] = ellHelp.haveEll[i][j];
+			}
+		}
+		int* dataPtr2 = (int*)pBuf;
+		for (int i = 0; i < DataF.N + 1; i++) {
+			for (int j = 0; j < DataF.N + 1; j++) {
+				dataPtr2[tmp++] = ellHelp.TypeEll[i][j];
+			}
+		}
+
+		//FlushViewOfFile(pBuf, (sizeof(bool))* (DataF.N + 1)* (DataF.N + 1) + (sizeof(int)) * (DataF.N + 1) * (DataF.N + 1));
+		//dataPtr[0] = xElipse = GET_X_LPARAM(lParam);
+		//dataPtr[1] = yElipse = GET_Y_LPARAM(lParam);
 		InvalidateRect(hwnd, NULL, true);
 		SendMessage(HWND_BROADCAST, WM_UPDATEDATA, NULL, NULL);
 		break;
@@ -784,6 +830,8 @@ int main(int argc, char* argv[])
 	if (argc > 1)
 		setTypeIO(argv[1]);
 
+	ReadParam();
+
 	WM_UPDATEDATA = RegisterWindowMessage((LPCWSTR)NAME_MY_EVENT);
 	if (WM_UPDATEDATA == 0) {
 		std::cout << "cant register window message" << std::endl; return 1;
@@ -798,13 +846,14 @@ int main(int argc, char* argv[])
 			NULL,                    // default security
 			PAGE_READWRITE,          // read/write access
 			0,                       // maximum object size (high-order DWORD)
-			BUF_SIZE,                // maximum object size (low-order DWORD)
+			(sizeof(bool))*(DataF.N + 1) * (DataF.N + 1) + (sizeof(int))*(DataF.N + 1) * (DataF.N + 1),                // maximum object size (low-order DWORD)
 			szName);                 // name of mapping object
 
 		if (hMapFile == NULL)
 		{
 			_tprintf(TEXT("Could not create file mapping object (%d).\n"),
 				GetLastError());
+			FreeDataF();
 			return 0;
 		}
 	}
@@ -812,16 +861,15 @@ int main(int argc, char* argv[])
 		FILE_MAP_ALL_ACCESS, // read/write permission
 		0,
 		0,
-		BUF_SIZE);
+		(sizeof(bool)) * (DataF.N + 1) * (DataF.N + 1) + (sizeof(int)) * (DataF.N + 1) * (DataF.N + 1));
 	if (pBuf == NULL)
 	{
 		_tprintf(TEXT("Could not map view of file (%d).\n"),
 			GetLastError());
 		CloseHandle(hMapFile);
+		FreeDataF();
 		return 0;
 	}
-
-	ReadParam();
 
 	loadImage();
 
@@ -880,7 +928,7 @@ int main(int argc, char* argv[])
 
 	ShowWindow(hwnd, SW_SHOW);
 	//SetTimer(hwnd, NULL, TIMER_INTERVAL, (TIMERPROC)SendMessage_WM_TIMER);
-
+	SendMessage(HWND_BROADCAST, WM_UPDATEDATA, NULL, NULL);
 	while ((bMessageOk = GetMessage(&message, NULL, 0, 0)) != 0) {
 		if (bMessageOk == -1) {
 			puts("Suddenly, GetMessage failed! You can call GetLastError() to see what happend");
