@@ -477,8 +477,10 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		}
 		//SendMessage(hwnd, WM_PAINT, NULL, NULL);
 		InvalidateRect(hwnd, NULL, true);
+		UpdateWindow(hwnd);
 		//char* dataPtr = (char*)pBuf;
 		//std::cout << "Oleg" << dataPtr[0] <<  std::endl;
+		return 0;
 	}
 	switch (message) {
 	case WM_DESTROY: {
@@ -624,7 +626,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		//FlushViewOfFile(pBuf, (sizeof(bool))* (DataF.N + 1)* (DataF.N + 1) + (sizeof(int)) * (DataF.N + 1) * (DataF.N + 1));
 		//dataPtr[0] = xElipse = GET_X_LPARAM(lParam);
 		//dataPtr[1] = yElipse = GET_Y_LPARAM(lParam);
-		InvalidateRect(hwnd, NULL, true);
+		//InvalidateRect(hwnd, NULL, true);
 		SendMessage(HWND_BROADCAST, WM_UPDATEDATA, NULL, NULL);
 		break;
 	}
