@@ -233,10 +233,57 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 	}
 	case WM_KEYDOWN:
 	{
-		if (wParam == VK_SPACE)
+		switch (wParam)
+		{
+		case VK_SPACE: {
 			if (WaitForSingleObject(MD.stopSem, 50) == WAIT_TIMEOUT)
 				ReleaseSemaphore(MD.stopSem, 1, NULL);
-		break;
+			break;
+		}
+		case '1':
+		{
+			bool k = SetThreadPriority(MD.ptrThread->native_handle(), THREAD_PRIORITY_IDLE);
+			std::cout << k;
+			break;
+		}
+		case '2':
+		{
+			bool k = SetThreadPriority(MD.ptrThread->native_handle(), THREAD_PRIORITY_LOWEST);
+			std::cout << k; 
+			break;
+		}
+		case '3':
+		{
+			bool k = SetThreadPriority(MD.ptrThread->native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
+			std::cout << k;
+			break;
+		}
+		case '4':
+		{
+			bool k = SetThreadPriority(MD.ptrThread->native_handle(), THREAD_PRIORITY_NORMAL);
+			std::cout << k;
+			break;
+		}
+		case '5':
+		{
+			bool k = SetThreadPriority(MD.ptrThread->native_handle(), THREAD_PRIORITY_ABOVE_NORMAL);
+			std::cout << k;
+			break;
+		}
+		case '6':
+		{
+			bool k = SetThreadPriority(MD.ptrThread->native_handle(), THREAD_PRIORITY_HIGHEST);
+			std::cout << k;
+			break;
+		}
+		case '7':
+		{
+			bool k = SetThreadPriority(MD.ptrThread->native_handle(), THREAD_PRIORITY_TIME_CRITICAL);
+			std::cout << k;
+			break;
+		}
+		default: break;
+		}
 	}
 	}
 
@@ -430,7 +477,7 @@ int main(int argc, char* argv[])
 	MD.stopSem = CreateSemaphore(NULL, 1, 1, NULL);
 	MD.SemCanExit = CreateSemaphore(NULL, 1, 1, NULL);
 	MD.ptrThread = new std::thread(ThreadDraw, &MD);
-	MD.ptrThread->detach();
+	//MD.ptrThread->detach();
 
 	ShowWindow(MD.hwnd, SW_SHOW);
 	//SetTimer(hwnd, NULL, TIMER_INTERVAL, (TIMERPROC)SendMessage_WM_TIMER);

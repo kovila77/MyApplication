@@ -244,7 +244,7 @@ void ThreadDraw(MAIN_DATA_STRUCT* MD) {
 
 		//std::cout << "1";
 		//ReleaseMutex(MD->stopSem);
-		Sleep(50);
+		Sleep(40);
 		//std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
 	//DeleteObject(bm);7
