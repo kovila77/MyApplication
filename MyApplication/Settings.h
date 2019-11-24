@@ -22,6 +22,11 @@ struct img {
 
 struct MAIN_DATA_STRUCT
 {
+	bool imFirst = false;
+	bool* haveCross;
+	bool imACross = false;
+	bool* lastWasCross;
+
 	const char* NAME_MY_DLL = "WWI.dll";
 	const char* NAME_MY_EVENT = "WM_UPDATEDATA";
 
@@ -32,7 +37,8 @@ struct MAIN_DATA_STRUCT
 	const wchar_t* fname = _T("Param.dat");
 
 	const TCHAR* szWinClass = _T("Win32SampleApp");
-	const TCHAR* szWinName = _T("Win32SampleWindow");
+	const TCHAR* szWinNameCross = _T("Cross Window");
+	const TCHAR* szWinNameZero = _T("Zero Window");
 	const TCHAR* szName = TEXT("MyFileMappingObject");
 	HWND hwnd;
 	HPEN lPen;
@@ -41,6 +47,7 @@ struct MAIN_DATA_STRUCT
 	int xElipse = -1;
 	int yElipse = -1;
 	int WM_UPDATEDATA = 0;
+	int* countClick;
 
 	HANDLE hMapFile;
 	LPCTSTR pBuf;
@@ -50,7 +57,8 @@ struct MAIN_DATA_STRUCT
 		int szXWNDCreated = 320;
 		int szYWNDCreated = 240;
 		COLORREF colorBack = RGB(0, 0, 255);
-		COLORREF colorLine = RGB(255, 0, 0);
+		//COLORREF colorLine = RGB(255, 0, 0);
+		COLORREF colorLine = RGB(0, 0, 0);
 		int countIcon = 0;
 		int RCountIcon = 0;
 		int* lenIcon;

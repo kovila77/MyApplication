@@ -29,39 +29,126 @@ void RunNotepad(void)
 	CloseHandle(pInfo.hThread);
 }
 
+void RunCopyMyProgramm() {
+	STARTUPINFO sInfo;
+	PROCESS_INFORMATION pInfo;
+
+	ZeroMemory(&sInfo, sizeof(STARTUPINFO));
+
+	CreateProcess(_T("MyApplication.exe"),
+		NULL, NULL, NULL, FALSE, 0, NULL, NULL, &sInfo, &pInfo);
+	CloseHandle(pInfo.hProcess);
+	CloseHandle(pInfo.hThread);
+}
+
+void clearArea() {
+	for (int i = 0; i < MD.DataF.N + 1; i++) {
+		for (int j = 0; j < MD.DataF.N + 1; j++) {
+			MD.ellHelp.haveEll[i][j] = false;
+			//ellHelp.TypeEll[i][j] = 0;
+		}
+	}
+	*MD.lastWasCross = false;
+	*MD.countClick = 0;
+	MessageBoxA(MD.hwnd, "Cross`s turn", "Begining", MB_OK);
+}
+
+void checkWin() {
+	bool winCW;
+	bool winCH;
+	bool winCD;
+	bool winZW;
+	bool winZH;
+	bool winZD;
+	bool winCOD;
+	bool winZOD;
+	for (int i = 0; i < MD.DataF.N + 1; i++) {
+		winCW = true;
+		winZW = true;
+		for (int j = 0; (winCW || winZW) && (j < MD.DataF.N + 1); j++) {
+			if (!(MD.ellHelp.haveEll[i][j] && MD.ellHelp.TypeEll[i][j] == 0))
+				winCW = false;
+			if (!(MD.ellHelp.haveEll[i][j] && MD.ellHelp.TypeEll[i][j] == 1))
+				winZW = false;
+		}
+		if (winCW) {
+			MessageBoxA(MD.hwnd, "Win Cross!!!", "THE END OF GAME!", MB_OK);
+			clearArea();
+			return;
+		}
+		if (winZW) {
+			MessageBoxA(MD.hwnd, "Win Zeros!!!", "THE END OF GAME!", MB_OK);
+			clearArea();
+			return;
+		}
+	}
+
+	for (int i = 0; i < MD.DataF.N + 1; i++) {
+		winCH = true;
+		winZH = true;
+		for (int j = 0; (winCH || winZH) && (j < MD.DataF.N + 1); j++) {
+			if (!(MD.ellHelp.haveEll[j][i] && MD.ellHelp.TypeEll[j][i] == 0))
+				winCH = false;
+			if (!(MD.ellHelp.haveEll[j][i] && MD.ellHelp.TypeEll[j][i] == 1))
+				winZH = false;
+		}
+		if (winCH) {
+			MessageBoxA(MD.hwnd, "Win Cross!!!", "THE END OF GAME!", MB_OK);
+			clearArea();
+			return;
+		}
+		if (winZH) {
+			MessageBoxA(MD.hwnd, "Win Zeros!!!", "THE END OF GAME!", MB_OK);
+			clearArea();
+			return;
+		}
+	}
+
+	winZD = true;
+	winCD = true;
+	for (int i = 0; (winZD || winCD) && (i < MD.DataF.N + 1); i++) {
+		if (!(MD.ellHelp.haveEll[i][i] && MD.ellHelp.TypeEll[i][i] == 0))
+			winCD = false;
+		if (!(MD.ellHelp.haveEll[i][i] && MD.ellHelp.TypeEll[i][i] == 1))
+			winZD = false;
+	}
+	if (winCD) {
+		MessageBoxA(MD.hwnd, "Win Cross!!!", "THE END OF GAME!", MB_OK);
+		clearArea();
+	}
+	if (winZD) {
+		MessageBoxA(MD.hwnd, "Win Zeros!!!", "THE END OF GAME!", MB_OK);
+		clearArea();
+	}
+
+	winCOD = true;
+	winZOD = true;
+	for (int i = 0; (winZOD || winCOD) && (i < MD.DataF.N + 1); i++) {
+		if (!(MD.ellHelp.haveEll[MD.DataF.N - i][i] && MD.ellHelp.TypeEll[MD.DataF.N - i][i] == 0))
+			winCOD = false;
+		if (!(MD.ellHelp.haveEll[MD.DataF.N - i][i] && MD.ellHelp.TypeEll[MD.DataF.N - i][i] == 1))
+			winZOD = false;
+	}
+	if (winCOD) {
+		MessageBoxA(MD.hwnd, "Win Cross!!!", "THE END OF GAME!", MB_OK);
+		clearArea();
+	}
+	if (winZOD) {
+		MessageBoxA(MD.hwnd, "Win Zeros!!!", "THE END OF GAME!", MB_OK);
+		clearArea();
+	}
+}
+
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	//std::cout << message << std::endl;
-	//if (message == MD.WM_UPDATEDATA) {
-	//	//int* dataPtr = (int*)pBuf;
-	//	//xElipse = dataPtr[0];
-	//	//yElipse = dataPtr[1];
-	//	/*bool* dataPtr1 = (bool*)MD.pBuf;
-	//	int tmp = 0;
-	//	for (int i = 0; i < MD.DataF.N + 1; i++) {
-	//		for (int j = 0; j < MD.DataF.N + 1; j++) {
-	//			MD.ellHelp.haveEll[i][j] = dataPtr1[tmp++];
-	//		}
-	//	}
-	//	int* dataPtr2 = (int*)MD.pBuf;
-	//	for (int i = 0; i < MD.DataF.N + 1; i++) {
-	//		for (int j = 0; j < MD.DataF.N + 1; j++) {
-	//			MD.ellHelp.TypeEll[i][j] = dataPtr2[tmp++];
-	//		}
-	//	}*/
-	//	//SendMessage(hwnd, WM_PAINT, NULL, NULL);
-	//	InvalidateRect(hwnd, NULL, true);
-	//	UpdateWindow(hwnd);
-	//	//char* dataPtr = (char*)pBuf;
-	//	//std::cout << "Oleg" << dataPtr[0] <<  std::endl;
-	//	return 0;
-	//}
 	switch (message) {
 	case WM_DESTROY: {
-		//Актуализация размеров окна
+		if (MD.imACross) *MD.haveCross = false;
 
 		MD.workThread = false;
-		WaitForSingleObject(MD.SemCanExit, INFINITE);
+		ReleaseSemaphore(MD.stopSem, 1, NULL);
+		//WaitForSingleObject(MD.SemCanExit, INFINITE);
+		MD.ptrThread->join();
 
 		RECT tmpWR = { 0 };
 		GetWindowRect(hwnd, &tmpWR);
@@ -74,95 +161,10 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 	case WM_PAINT: {
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hwnd, &ps);
-		/*
-		//GetClientRect(hwnd, &ps.rcPaint);
-
-		//HGDIOBJ tempPen = SelectObject(hdc, (HGDIOBJ)MD.lPen);
-
-		//double stepX = ps.rcPaint.right / (double)(MD.DataF.N + 1);
-		//double positionX = stepX;
-		//double stepY = ps.rcPaint.bottom / (double)(MD.DataF.N + 1);
-		//double positionY = stepY;
-
-
-		////if (xElipse > 0 && stepX != 0 && stepY != 0) {
-		////	int i = (int)(xElipse / stepX);
-		////	int j = (int)(yElipse / stepY);
-		////	ellHelp.haveEll[i][j] = !ellHelp.haveEll[i][j];
-		////	if (DataF.RCountIcon != 0) {
-		////		ellHelp.TypeEll[i][j] = rand() % DataF.RCountIcon;
-
-		////	}
-		////	xElipse = yElipse = -1;
-		////	//SendMessage(HWND_BROADCAST, WM_UPDATEDATA, NULL, NULL);
-		////}
-
-		//if (MD.DataF.RCountIcon == 0) {
-		//	SelectObject(hdc, MD.hBrushEll);
-		//	for (int i = 0; i < MD.DataF.N + 1; i++)
-		//		for (int j = 0; j < MD.DataF.N + 1; j++)
-		//			if (MD.ellHelp.haveEll[i][j] && stepX != 0 && stepY != 0) {
-		//				Ellipse(hdc, stepX * i, stepY * j, stepX * i + stepX, stepY * j + stepY);
-		//			}
-		//	SelectObject(hdc, MD.hBrush);
-		//}
-		//else {
-		//	//PatBlt(hdc, 0, 0, 10, 10, WHITENESS);
-		//	//PatBlt(hdc, xDest, yDest, xWidth, yHeight, dwROP);
-		//	//HDC hdcTMP = CreateDC(pszDriver, pszDevice, pszOutput, pData);
-
-		//	//SetMapMode(hdcTemp, GetMapMode(hdc));
-
-		//	for (int i = 0; i < MD.DataF.N + 1; i++)
-		//		for (int j = 0; j < MD.DataF.N + 1; j++)
-		//			if (MD.ellHelp.haveEll[i][j] && stepX != 0 && stepY != 0) {
-		//				//Ellipse(hdc, stepX * i, stepY * j, stepX * i + stepX, stepY * j + stepY);
-		//				HDC hdcTemp = CreateCompatibleDC(hdc);
-		//				SelectObject(hdcTemp, myImages[MD.ellHelp.TypeEll[i][j]].bm);
-		//				/*BitBlt(hdc,
-		//					stepX * i, stepY * j,
-		//					stepX * i + stepX - stepX * i, stepY * j + stepY - stepY * j,
-		//					hdcTemp,
-		//					0, 0,
-		//					SRCCOPY);*/
-		//				BLENDFUNCTION b = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
-		//				/*TransparentBlt(
-		//					hdc,
-		//					stepX * i, stepY * j,
-		//					stepX * i + stepX - stepX * i, stepY * j + stepY - stepY * j,
-		//					hdcTemp,
-		//					0, 0,
-		//					myImages[ellHelp.TypeEll[i][j]].width, myImages[ellHelp.TypeEll[i][j]].height,
-		//					RGB(0, 0, 0));*/
-		//				AlphaBlend(
-		//					hdc,
-		//					stepX * i, stepY * j,
-		//					stepX * i + stepX - stepX * i, stepY * j + stepY - stepY * j,
-		//					hdcTemp,
-		//					0, 0,
-		//					myImages[MD.ellHelp.TypeEll[i][j]].width, myImages[MD.ellHelp.TypeEll[i][j]].height,
-		//					b);
-		//				DeleteDC(hdcTemp);
-		//			}
-
-		//}
-
-		//for (int i = 0; i < MD.DataF.N; i++) {
-		//	MoveToEx(hdc, positionX, 0, NULL);
-		//	LineTo(hdc, positionX, ps.rcPaint.bottom);
-		//	MoveToEx(hdc, 0, positionY, NULL);
-		//	LineTo(hdc, ps.rcPaint.right, positionY);
-		//	positionX += stepX;
-		//	positionY += stepY;
-		//}
-
-		//SelectObject(hdc, tempPen);
 		EndPaint(hwnd, &ps);
-		////DeleteObject(hBitmapImage);
 		break;
 	}
 	case WM_LBUTTONDOWN: {
-		//int* dataPtr = (int*)pBuf;
 		MD.xElipse = GET_X_LPARAM(lParam);
 		MD.yElipse = GET_Y_LPARAM(lParam);
 
@@ -178,15 +180,33 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		if (MD.xElipse > 0 && stepX != 0 && stepY != 0) {
 			int i = (int)(MD.xElipse / stepX);
 			int j = (int)(MD.yElipse / stepY);
-			MD.ellHelp.haveEll[i][j] = !MD.ellHelp.haveEll[i][j];
-			if (MD.DataF.RCountIcon != 0) {
-				MD.ellHelp.TypeEll[i][j] = rand() % MD.DataF.RCountIcon;
+			if (MD.ellHelp.haveEll[i][j]) break;
+			if (MD.imACross) {
+				if (*MD.lastWasCross) break;
+				*MD.lastWasCross = true;
+			}
+			else {
+				if (!(*MD.lastWasCross)) break;
+				*MD.lastWasCross = false;
+			}
 
+			(*MD.countClick)++;
+			MD.ellHelp.haveEll[i][j] = true;//!MD.ellHelp.haveEll[i][j];
+
+			if (MD.DataF.RCountIcon != 0) {
+				if (MD.imACross)
+					MD.ellHelp.TypeEll[i][j] = 0;
+				else
+					MD.ellHelp.TypeEll[i][j] = 1;
 			}
 			MD.xElipse = MD.yElipse = -1;
 		}
 
-		//SendMessage(HWND_BROADCAST, MD.WM_UPDATEDATA, NULL, NULL);
+		checkWin();
+		if (*MD.countClick >= (MD.DataF.N + 1) * (MD.DataF.N + 1)) { 
+			*MD.countClick = 0;
+			clearArea();
+		}
 		break;
 	}
 	case WM_HOTKEY: {
@@ -249,7 +269,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		case '2':
 		{
 			bool k = SetThreadPriority(MD.ptrThread->native_handle(), THREAD_PRIORITY_LOWEST);
-			std::cout << k; 
+			std::cout << k;
 			break;
 		}
 		case '3':
@@ -325,18 +345,6 @@ void loadImage() {
 
 	for (int i = 0; i < MD.DataF.countIcon; i++) {
 		buff = (*load_image)(MD.DataF.nameIcons[i], width, height);
-		//std::ofstream fdout("checkImage.txt");
-		//int tek=0;
-		//fdout.fill('0');
-		//for (int r1 = 0; r1 < width*4; r1++) {
-		//	for (int r2 = 0; r2 < height; r2++) {
-		//		fdout.width(3);
-		//		fdout << int(buff[tek++]);
-		//		if (tek % 4 == 0) fdout << '.';// else buff[tek] = 0;
-		//	}
-		//	fdout << std::endl;
-		//}
-		//fdout.close();
 		for (int y = 0; y < height; ++y)
 		{
 			BYTE* pPixel = (BYTE*)buff + width * 4 * y;
@@ -360,10 +368,6 @@ void loadImage() {
 	FreeLibrary(hLib);
 }
 
-//void SendMessage_WM_TIMER() {
-//	SendMessage(hwnd, WM_TIMER, NULL, NULL);
-//}
-
 int main(int argc, char* argv[])
 {
 	if (argc > 1)
@@ -380,12 +384,14 @@ int main(int argc, char* argv[])
 		FALSE,                 // do not inherit the name
 		MD.szName);               // name of mapping object
 	if (!MD.hMapFile) {
+		MD.imACross = true;
+		MD.imFirst = true;
 		MD.hMapFile = CreateFileMapping(
 			INVALID_HANDLE_VALUE,    // use paging file
 			NULL,                    // default security
 			PAGE_READWRITE,          // read/write access
 			0,                       // maximum object size (high-order DWORD)
-			(sizeof(bool)) * (MD.DataF.N + 1) * (MD.DataF.N + 1) + (sizeof(int)) * (MD.DataF.N + 1) * (MD.DataF.N + 1),                // maximum object size (low-order DWORD)
+			((sizeof(bool)) * (MD.DataF.N + 1) * (MD.DataF.N + 1) + (sizeof(int)) * (MD.DataF.N + 1) * (MD.DataF.N + 1) + 2 * sizeof(bool) + sizeof(int)),                // maximum object size (low-order DWORD)
 			MD.szName);                 // name of mapping object
 
 		if (MD.hMapFile == NULL)
@@ -400,7 +406,7 @@ int main(int argc, char* argv[])
 		FILE_MAP_ALL_ACCESS, // read/write permission
 		0,
 		0,
-		(sizeof(bool)) * (MD.DataF.N + 1) * (MD.DataF.N + 1) + (sizeof(int)) * (MD.DataF.N + 1) * (MD.DataF.N + 1));
+		((sizeof(bool)) * (MD.DataF.N + 1) * (MD.DataF.N + 1) + (sizeof(int)) * (MD.DataF.N + 1) * (MD.DataF.N + 1) + 2 * sizeof(bool)) + sizeof(int));
 	if (MD.pBuf == NULL)
 	{
 		_tprintf(TEXT("Could not map view of file (%d).\n"),
@@ -436,12 +442,29 @@ int main(int argc, char* argv[])
 		MD.ellHelp.TypeEll[i] = tmp2;
 		tmp2 += (MD.DataF.N + 1);
 	}
-	for (int i = 0; i < MD.DataF.N + 1; i++) {
-		for (int j = 0; j < MD.DataF.N + 1; j++) {
-			MD.ellHelp.haveEll[i][j] = false;
-			//ellHelp.TypeEll[i][j] = 0;
-		}
+	MD.haveCross = (bool*)tmp2;
+	MD.lastWasCross = MD.haveCross + 1;
+	MD.countClick = (int*)(MD.lastWasCross + 1);
+
+	if (MD.imFirst) { 
+		//*MD.countClick = 0;
+			//*MD.lastWasCross = false; 
+			clearArea();
+			RunCopyMyProgramm();
 	}
+	if (MD.imACross) { *MD.haveCross = true; }
+	else
+		if (!(*MD.haveCross)) {
+			MD.imACross = true;
+			*MD.haveCross = true;
+		}
+
+	//for (int i = 0; i < MD.DataF.N + 1; i++) {
+	//	for (int j = 0; j < MD.DataF.N + 1; j++) {
+	//		MD.ellHelp.haveEll[i][j] = false;
+	//		//ellHelp.TypeEll[i][j] = 0;
+	//	}
+	//}
 
 	wincl.hInstance = hThisInstance;
 	wincl.lpszClassName = MD.szWinClass;
@@ -454,11 +477,25 @@ int main(int argc, char* argv[])
 
 	if (!RegisterClassEx(&wincl))
 		return 0;
-
+	if (MD.imACross)
 	MD.hwnd = CreateWindowEx(
 		NULL,
 		MD.szWinClass,          /* Classname */
-		MD.szWinName,       /* Title Text */
+		MD.szWinNameCross,       /* Title Text */
+		WS_OVERLAPPEDWINDOW, /* default window */
+		CW_USEDEFAULT,       /* Windows decides the position */
+		CW_USEDEFAULT,       /* where the window ends up on the screen */
+		MD.DataF.szXWNDCreated,                 /* The programs width */
+		MD.DataF.szYWNDCreated,                 /* and height in pixels */
+		HWND_DESKTOP,        /* The window is a child-window to desktop */
+		NULL,                /* No menu */
+		hThisInstance,       /* Program Instance handler */
+		NULL                 /* No Window Creation data */
+	);
+	else MD.hwnd = CreateWindowEx(
+		NULL,
+		MD.szWinClass,          /* Classname */
+		MD.szWinNameZero,       /* Title Text */
 		WS_OVERLAPPEDWINDOW, /* default window */
 		CW_USEDEFAULT,       /* Windows decides the position */
 		CW_USEDEFAULT,       /* where the window ends up on the screen */
@@ -501,13 +538,8 @@ int main(int argc, char* argv[])
 	}
 	delete[] MD.myImages;
 
-	/*for (int i = 0; i < MD.DataF.N + 1; i++) {
-		delete[]MD.ellHelp.haveEll[i];
-		delete[]MD.ellHelp.TypeEll[i];
-	}*/
 	delete[]MD.ellHelp.haveEll;
 	delete[]MD.ellHelp.TypeEll;
-	//delete[]DataF.nameIcons;
 	DeleteObject(MD.hBrush);
 	DeleteObject(MD.hBrushEll);
 
