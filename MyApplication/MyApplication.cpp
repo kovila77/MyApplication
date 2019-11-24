@@ -44,7 +44,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		//int* dataPtr = (int*)pBuf;
 		//xElipse = dataPtr[0];
 		//yElipse = dataPtr[1];
-		bool* dataPtr1 = (bool*)MD.pBuf;
+		/*bool* dataPtr1 = (bool*)MD.pBuf;
 		int tmp = 0;
 		for (int i = 0; i < MD.DataF.N + 1; i++) {
 			for (int j = 0; j < MD.DataF.N + 1; j++) {
@@ -56,7 +56,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 			for (int j = 0; j < MD.DataF.N + 1; j++) {
 				MD.ellHelp.TypeEll[i][j] = dataPtr2[tmp++];
 			}
-		}
+		}*/
 		//SendMessage(hwnd, WM_PAINT, NULL, NULL);
 		InvalidateRect(hwnd, NULL, true);
 		UpdateWindow(hwnd);
@@ -177,8 +177,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		double positionX = stepX;
 		double stepY = mR.bottom / (double)(MD.DataF.N + 1);
 		double positionY = stepY;
-
-
+		
 		if (MD.xElipse > 0 && stepX != 0 && stepY != 0) {
 			int i = (int)(MD.xElipse / stepX);
 			int j = (int)(MD.yElipse / stepY);
@@ -191,24 +190,6 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 			
 		}
 
-		bool* dataPtr1 = (bool*)MD.pBuf;
-		int tmp = 0;
-		for (int i = 0; i < MD.DataF.N + 1; i++) {
-			for (int j = 0; j < MD.DataF.N + 1; j++) {
-				dataPtr1[tmp++] = MD.ellHelp.haveEll[i][j];
-			}
-		}
-		int* dataPtr2 = (int*)MD.pBuf;
-		for (int i = 0; i < MD.DataF.N + 1; i++) {
-			for (int j = 0; j < MD.DataF.N + 1; j++) {
-				dataPtr2[tmp++] = MD.ellHelp.TypeEll[i][j];
-			}
-		}
-
-		//FlushViewOfFile(pBuf, (sizeof(bool))* (DataF.N + 1)* (DataF.N + 1) + (sizeof(int)) * (DataF.N + 1) * (DataF.N + 1));
-		//dataPtr[0] = xElipse = GET_X_LPARAM(lParam);
-		//dataPtr[1] = yElipse = GET_Y_LPARAM(lParam);
-		//InvalidateRect(hwnd, NULL, true);
 		SendMessage(HWND_BROADCAST, MD.WM_UPDATEDATA, NULL, NULL);
 		break;
 	}
@@ -368,10 +349,19 @@ int main(int argc, char* argv[])
 	MD.lPen = CreatePen(PS_SOLID, 3, MD.DataF.colorLine);
 
 	MD.ellHelp.haveEll = new bool* [MD.DataF.N + 1];
-	MD.ellHelp.TypeEll = new int* [MD.DataF.N + 1];
+    MD.ellHelp.TypeEll = new int* [MD.DataF.N + 1];
+
+	bool* tmp1;
+	tmp1 = (bool*)MD.pBuf;
 	for (int i = 0; i < MD.DataF.N + 1; i++) {
-		MD.ellHelp.haveEll[i] = new bool[MD.DataF.N + 1];
-		MD.ellHelp.TypeEll[i] = new int[MD.DataF.N + 1];
+		MD.ellHelp.haveEll[i] = tmp1;
+		tmp1 += (MD.DataF.N + 1);
+	}
+	int* tmp2;
+	tmp2 = (int*)tmp1;
+	for (int i = 0; i < (MD.DataF.N + 1); i++) {
+		MD.ellHelp.TypeEll[i] = tmp2;
+		tmp2 += (MD.DataF.N + 1);
 	}
 	for (int i = 0; i < MD.DataF.N + 1; i++) {
 		for (int j = 0; j < MD.DataF.N + 1; j++) {
@@ -433,10 +423,10 @@ int main(int argc, char* argv[])
 	}
 	delete[] myImages;
 
-	for (int i = 0; i < MD.DataF.N + 1; i++) {
+	/*for (int i = 0; i < MD.DataF.N + 1; i++) {
 		delete[]MD.ellHelp.haveEll[i];
 		delete[]MD.ellHelp.TypeEll[i];
-	}
+	}*/
 	delete[]MD.ellHelp.haveEll;
 	delete[]MD.ellHelp.TypeEll;
 	//delete[]DataF.nameIcons;
