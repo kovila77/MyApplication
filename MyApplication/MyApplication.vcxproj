@@ -153,6 +153,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Draw.cpp" />
     <ClCompile Include="IO.cpp" />
     <ClCompile Include="MyApplication.cpp" />
   </ItemGroup>

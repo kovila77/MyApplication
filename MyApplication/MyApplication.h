@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <thread>
 
 #include "Settings.h"
 
@@ -16,6 +17,8 @@
 #define TMAPPING 2
 #define TWINAPI 3
 #define TSTREAMIO 4
+
+void ThreadDraw(MAIN_DATA_STRUCT* MD);
 
 void FreeDataF(MAIN_DATA_STRUCT* MD);
 

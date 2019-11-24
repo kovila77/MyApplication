@@ -16,14 +16,6 @@
 MAIN_DATA_STRUCT MAIN_DATA;
 #define MD MAIN_DATA
 
-struct img {
-	HBITMAP bm;
-	int width;
-	int height;
-};
-img* myImages;
-
-
 void RunNotepad(void)
 {
 	STARTUPINFO sInfo;
@@ -39,7 +31,7 @@ void RunNotepad(void)
 
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	std::cout << message << std::endl;
+	//std::cout << message << std::endl;
 	if (message == MD.WM_UPDATEDATA) {
 		//int* dataPtr = (int*)pBuf;
 		//xElipse = dataPtr[0];
@@ -67,6 +59,10 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 	switch (message) {
 	case WM_DESTROY: {
 		//Актуализация размеров окна
+
+		MD.workThread = false;
+		WaitForSingleObject(MD.SemCanExit, INFINITE);
+
 		RECT tmpWR = { 0 };
 		GetWindowRect(hwnd, &tmpWR);
 		MD.DataF.szXWNDCreated = tmpWR.right - tmpWR.left;
@@ -76,92 +72,93 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		return 0;
 	}
 	case WM_PAINT: {
-		PAINTSTRUCT ps;
-		HDC hdc = BeginPaint(hwnd, &ps);
-		GetClientRect(hwnd, &ps.rcPaint);
+		//PAINTSTRUCT ps;
+		//HDC hdc = BeginPaint(hwnd, &ps);
+		/*
+		//GetClientRect(hwnd, &ps.rcPaint);
 
-		HGDIOBJ tempPen = SelectObject(hdc, (HGDIOBJ)MD.lPen);
+		//HGDIOBJ tempPen = SelectObject(hdc, (HGDIOBJ)MD.lPen);
 
-		double stepX = ps.rcPaint.right / (double)(MD.DataF.N + 1);
-		double positionX = stepX;
-		double stepY = ps.rcPaint.bottom / (double)(MD.DataF.N + 1);
-		double positionY = stepY;
+		//double stepX = ps.rcPaint.right / (double)(MD.DataF.N + 1);
+		//double positionX = stepX;
+		//double stepY = ps.rcPaint.bottom / (double)(MD.DataF.N + 1);
+		//double positionY = stepY;
 
 
-		//if (xElipse > 0 && stepX != 0 && stepY != 0) {
-		//	int i = (int)(xElipse / stepX);
-		//	int j = (int)(yElipse / stepY);
-		//	ellHelp.haveEll[i][j] = !ellHelp.haveEll[i][j];
-		//	if (DataF.RCountIcon != 0) {
-		//		ellHelp.TypeEll[i][j] = rand() % DataF.RCountIcon;
+		////if (xElipse > 0 && stepX != 0 && stepY != 0) {
+		////	int i = (int)(xElipse / stepX);
+		////	int j = (int)(yElipse / stepY);
+		////	ellHelp.haveEll[i][j] = !ellHelp.haveEll[i][j];
+		////	if (DataF.RCountIcon != 0) {
+		////		ellHelp.TypeEll[i][j] = rand() % DataF.RCountIcon;
 
-		//	}
-		//	xElipse = yElipse = -1;
-		//	//SendMessage(HWND_BROADCAST, WM_UPDATEDATA, NULL, NULL);
+		////	}
+		////	xElipse = yElipse = -1;
+		////	//SendMessage(HWND_BROADCAST, WM_UPDATEDATA, NULL, NULL);
+		////}
+
+		//if (MD.DataF.RCountIcon == 0) {
+		//	SelectObject(hdc, MD.hBrushEll);
+		//	for (int i = 0; i < MD.DataF.N + 1; i++)
+		//		for (int j = 0; j < MD.DataF.N + 1; j++)
+		//			if (MD.ellHelp.haveEll[i][j] && stepX != 0 && stepY != 0) {
+		//				Ellipse(hdc, stepX * i, stepY * j, stepX * i + stepX, stepY * j + stepY);
+		//			}
+		//	SelectObject(hdc, MD.hBrush);
+		//}
+		//else {
+		//	//PatBlt(hdc, 0, 0, 10, 10, WHITENESS);
+		//	//PatBlt(hdc, xDest, yDest, xWidth, yHeight, dwROP);
+		//	//HDC hdcTMP = CreateDC(pszDriver, pszDevice, pszOutput, pData);
+
+		//	//SetMapMode(hdcTemp, GetMapMode(hdc));
+
+		//	for (int i = 0; i < MD.DataF.N + 1; i++)
+		//		for (int j = 0; j < MD.DataF.N + 1; j++)
+		//			if (MD.ellHelp.haveEll[i][j] && stepX != 0 && stepY != 0) {
+		//				//Ellipse(hdc, stepX * i, stepY * j, stepX * i + stepX, stepY * j + stepY);
+		//				HDC hdcTemp = CreateCompatibleDC(hdc);
+		//				SelectObject(hdcTemp, myImages[MD.ellHelp.TypeEll[i][j]].bm);
+		//				/*BitBlt(hdc,
+		//					stepX * i, stepY * j,
+		//					stepX * i + stepX - stepX * i, stepY * j + stepY - stepY * j,
+		//					hdcTemp,
+		//					0, 0,
+		//					SRCCOPY);*/
+		//				BLENDFUNCTION b = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
+		//				/*TransparentBlt(
+		//					hdc,
+		//					stepX * i, stepY * j,
+		//					stepX * i + stepX - stepX * i, stepY * j + stepY - stepY * j,
+		//					hdcTemp,
+		//					0, 0,
+		//					myImages[ellHelp.TypeEll[i][j]].width, myImages[ellHelp.TypeEll[i][j]].height,
+		//					RGB(0, 0, 0));*/
+		//				AlphaBlend(
+		//					hdc,
+		//					stepX * i, stepY * j,
+		//					stepX * i + stepX - stepX * i, stepY * j + stepY - stepY * j,
+		//					hdcTemp,
+		//					0, 0,
+		//					myImages[MD.ellHelp.TypeEll[i][j]].width, myImages[MD.ellHelp.TypeEll[i][j]].height,
+		//					b);
+		//				DeleteDC(hdcTemp);
+		//			}
+
 		//}
 
-		if (MD.DataF.RCountIcon == 0) {
-			SelectObject(hdc, MD.hBrushEll);
-			for (int i = 0; i < MD.DataF.N + 1; i++)
-				for (int j = 0; j < MD.DataF.N + 1; j++)
-					if (MD.ellHelp.haveEll[i][j] && stepX != 0 && stepY != 0) {
-						Ellipse(hdc, stepX * i, stepY * j, stepX * i + stepX, stepY * j + stepY);
-					}
-			SelectObject(hdc, MD.hBrush);
-		}
-		else {
-			//PatBlt(hdc, 0, 0, 10, 10, WHITENESS);
-			//PatBlt(hdc, xDest, yDest, xWidth, yHeight, dwROP);
-			//HDC hdcTMP = CreateDC(pszDriver, pszDevice, pszOutput, pData);
+		//for (int i = 0; i < MD.DataF.N; i++) {
+		//	MoveToEx(hdc, positionX, 0, NULL);
+		//	LineTo(hdc, positionX, ps.rcPaint.bottom);
+		//	MoveToEx(hdc, 0, positionY, NULL);
+		//	LineTo(hdc, ps.rcPaint.right, positionY);
+		//	positionX += stepX;
+		//	positionY += stepY;
+		//}
 
-			//SetMapMode(hdcTemp, GetMapMode(hdc));
-
-			for (int i = 0; i < MD.DataF.N + 1; i++)
-				for (int j = 0; j < MD.DataF.N + 1; j++)
-					if (MD.ellHelp.haveEll[i][j] && stepX != 0 && stepY != 0) {
-						//Ellipse(hdc, stepX * i, stepY * j, stepX * i + stepX, stepY * j + stepY);
-						HDC hdcTemp = CreateCompatibleDC(hdc);
-						SelectObject(hdcTemp, myImages[MD.ellHelp.TypeEll[i][j]].bm);
-						/*BitBlt(hdc,
-							stepX * i, stepY * j,
-							stepX * i + stepX - stepX * i, stepY * j + stepY - stepY * j,
-							hdcTemp,
-							0, 0,
-							SRCCOPY);*/
-						BLENDFUNCTION b = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
-						/*TransparentBlt(
-							hdc,
-							stepX * i, stepY * j,
-							stepX * i + stepX - stepX * i, stepY * j + stepY - stepY * j,
-							hdcTemp,
-							0, 0,
-							myImages[ellHelp.TypeEll[i][j]].width, myImages[ellHelp.TypeEll[i][j]].height,
-							RGB(0, 0, 0));*/
-						AlphaBlend(
-							hdc,
-							stepX * i, stepY * j,
-							stepX * i + stepX - stepX * i, stepY * j + stepY - stepY * j,
-							hdcTemp,
-							0, 0,
-							myImages[MD.ellHelp.TypeEll[i][j]].width, myImages[MD.ellHelp.TypeEll[i][j]].height,
-							b);
-						DeleteDC(hdcTemp);
-					}
-
-		}
-
-		for (int i = 0; i < MD.DataF.N; i++) {
-			MoveToEx(hdc, positionX, 0, NULL);
-			LineTo(hdc, positionX, ps.rcPaint.bottom);
-			MoveToEx(hdc, 0, positionY, NULL);
-			LineTo(hdc, ps.rcPaint.right, positionY);
-			positionX += stepX;
-			positionY += stepY;
-		}
-
-		SelectObject(hdc, tempPen);
-		EndPaint(hwnd, &ps);
-		//DeleteObject(hBitmapImage);
+		//SelectObject(hdc, tempPen);
+		//EndPaint(hwnd, &ps);
+		////DeleteObject(hBitmapImage);
 		break;
 	}
 	case WM_LBUTTONDOWN: {
@@ -177,7 +174,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		double positionX = stepX;
 		double stepY = mR.bottom / (double)(MD.DataF.N + 1);
 		double positionY = stepY;
-		
+
 		if (MD.xElipse > 0 && stepX != 0 && stepY != 0) {
 			int i = (int)(MD.xElipse / stepX);
 			int j = (int)(MD.yElipse / stepY);
@@ -187,7 +184,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
 			}
 			MD.xElipse = MD.yElipse = -1;
-			
+
 		}
 
 		SendMessage(HWND_BROADCAST, MD.WM_UPDATEDATA, NULL, NULL);
@@ -262,7 +259,7 @@ void setTypeIO(const char* arg) {
 
 void loadImage() {
 	HMODULE hLib;
-	myImages = new img[MD.DataF.countIcon];
+	MD.myImages = new img[MD.DataF.countIcon];
 	hLib = LoadLibraryA(MD.NAME_MY_DLL);
 	if (hLib == NULL) { std::cout << "cant open LIB" << std::endl; return; }
 
@@ -275,10 +272,33 @@ void loadImage() {
 
 	for (int i = 0; i < MD.DataF.countIcon; i++) {
 		buff = (*load_image)(MD.DataF.nameIcons[i], width, height);
+		//std::ofstream fdout("checkImage.txt");
+		//int tek=0;
+		//fdout.fill('0');
+		//for (int r1 = 0; r1 < width*4; r1++) {
+		//	for (int r2 = 0; r2 < height; r2++) {
+		//		fdout.width(3);
+		//		fdout << int(buff[tek++]);
+		//		if (tek % 4 == 0) fdout << '.';// else buff[tek] = 0;
+		//	}
+		//	fdout << std::endl;
+		//}
+		//fdout.close();
+		for (int y = 0; y < height; ++y)
+		{
+			BYTE* pPixel = (BYTE*)buff + width * 4 * y;
+			for (int x = 0; x < width; ++x)
+			{
+				pPixel[0] = pPixel[0] * pPixel[3] / 255;
+				pPixel[1] = pPixel[1] * pPixel[3] / 255;
+				pPixel[2] = pPixel[2] * pPixel[3] / 255;
+				pPixel += 4;
+			}
+		}
 		if (buff != NULL) {
-			myImages[MD.DataF.RCountIcon].bm = CreateBitmap(width, height, 1, 32, buff);
-			myImages[MD.DataF.RCountIcon].width = width;
-			myImages[MD.DataF.RCountIcon].height = height;
+			MD.myImages[MD.DataF.RCountIcon].bm = CreateBitmap(width, height, 1, 32, buff);
+			MD.myImages[MD.DataF.RCountIcon].width = width;
+			MD.myImages[MD.DataF.RCountIcon].height = height;
 			MD.DataF.RCountIcon++;
 			delete buff;
 		}
@@ -312,7 +332,7 @@ int main(int argc, char* argv[])
 			NULL,                    // default security
 			PAGE_READWRITE,          // read/write access
 			0,                       // maximum object size (high-order DWORD)
-			(sizeof(bool))*(MD.DataF.N + 1) * (MD.DataF.N + 1) + (sizeof(int))*(MD.DataF.N + 1) * (MD.DataF.N + 1),                // maximum object size (low-order DWORD)
+			(sizeof(bool)) * (MD.DataF.N + 1) * (MD.DataF.N + 1) + (sizeof(int)) * (MD.DataF.N + 1) * (MD.DataF.N + 1),                // maximum object size (low-order DWORD)
 			MD.szName);                 // name of mapping object
 
 		if (MD.hMapFile == NULL)
@@ -349,7 +369,7 @@ int main(int argc, char* argv[])
 	MD.lPen = CreatePen(PS_SOLID, 3, MD.DataF.colorLine);
 
 	MD.ellHelp.haveEll = new bool* [MD.DataF.N + 1];
-    MD.ellHelp.TypeEll = new int* [MD.DataF.N + 1];
+	MD.ellHelp.TypeEll = new int* [MD.DataF.N + 1];
 
 	bool* tmp1;
 	tmp1 = (bool*)MD.pBuf;
@@ -401,6 +421,10 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
+	MD.SemCanExit = CreateSemaphore(NULL, 1, 1, NULL);
+	MD.ptrThread = new std::thread(ThreadDraw, &MD);
+	MD.ptrThread->detach();
+
 	ShowWindow(MD.hwnd, SW_SHOW);
 	//SetTimer(hwnd, NULL, TIMER_INTERVAL, (TIMERPROC)SendMessage_WM_TIMER);
 	SendMessage(HWND_BROADCAST, MD.WM_UPDATEDATA, NULL, NULL);
@@ -419,9 +443,9 @@ int main(int argc, char* argv[])
 	WriteParam(&MD);
 
 	for (int i = 0; i < MD.DataF.RCountIcon; i++) {
-		DeleteObject(myImages[i].bm);
+		DeleteObject(MD.myImages[i].bm);
 	}
-	delete[] myImages;
+	delete[] MD.myImages;
 
 	/*for (int i = 0; i < MD.DataF.N + 1; i++) {
 		delete[]MD.ellHelp.haveEll[i];

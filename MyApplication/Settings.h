@@ -14,10 +14,19 @@
 #define HOTKEY__CONTROL_Q__EXIT 18
 #endif // !HOTKEY__CONTROL_Q__EXIT
 
+struct img {
+	HBITMAP bm;
+	int width;
+	int height;
+};
+
 struct MAIN_DATA_STRUCT
 {
 	const char* NAME_MY_DLL = "WWI.dll";
 	const char* NAME_MY_EVENT = "WM_UPDATEDATA";
+
+	bool workThread = true;
+	HANDLE SemCanExit;
 
 	int TYPE_OF_IO = 1; //TPStream
 	const wchar_t* fname = _T("Param.dat");
@@ -52,4 +61,8 @@ struct MAIN_DATA_STRUCT
 		bool** haveEll;
 		int** TypeEll;
 	} ellHelp;
+
+	img* myImages;
+
+	std::thread* ptrThread;
 };
