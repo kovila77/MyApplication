@@ -65,4 +65,6 @@ struct MAIN_DATA_STRUCT
 	img* myImages;
 
 	std::thread* ptrThread;
+
+	HANDLE stopSem;
 };

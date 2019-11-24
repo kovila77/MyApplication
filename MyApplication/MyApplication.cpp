@@ -32,30 +32,30 @@ void RunNotepad(void)
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	//std::cout << message << std::endl;
-	if (message == MD.WM_UPDATEDATA) {
-		//int* dataPtr = (int*)pBuf;
-		//xElipse = dataPtr[0];
-		//yElipse = dataPtr[1];
-		/*bool* dataPtr1 = (bool*)MD.pBuf;
-		int tmp = 0;
-		for (int i = 0; i < MD.DataF.N + 1; i++) {
-			for (int j = 0; j < MD.DataF.N + 1; j++) {
-				MD.ellHelp.haveEll[i][j] = dataPtr1[tmp++];
-			}
-		}
-		int* dataPtr2 = (int*)MD.pBuf;
-		for (int i = 0; i < MD.DataF.N + 1; i++) {
-			for (int j = 0; j < MD.DataF.N + 1; j++) {
-				MD.ellHelp.TypeEll[i][j] = dataPtr2[tmp++];
-			}
-		}*/
-		//SendMessage(hwnd, WM_PAINT, NULL, NULL);
-		InvalidateRect(hwnd, NULL, true);
-		UpdateWindow(hwnd);
-		//char* dataPtr = (char*)pBuf;
-		//std::cout << "Oleg" << dataPtr[0] <<  std::endl;
-		return 0;
-	}
+	//if (message == MD.WM_UPDATEDATA) {
+	//	//int* dataPtr = (int*)pBuf;
+	//	//xElipse = dataPtr[0];
+	//	//yElipse = dataPtr[1];
+	//	/*bool* dataPtr1 = (bool*)MD.pBuf;
+	//	int tmp = 0;
+	//	for (int i = 0; i < MD.DataF.N + 1; i++) {
+	//		for (int j = 0; j < MD.DataF.N + 1; j++) {
+	//			MD.ellHelp.haveEll[i][j] = dataPtr1[tmp++];
+	//		}
+	//	}
+	//	int* dataPtr2 = (int*)MD.pBuf;
+	//	for (int i = 0; i < MD.DataF.N + 1; i++) {
+	//		for (int j = 0; j < MD.DataF.N + 1; j++) {
+	//			MD.ellHelp.TypeEll[i][j] = dataPtr2[tmp++];
+	//		}
+	//	}*/
+	//	//SendMessage(hwnd, WM_PAINT, NULL, NULL);
+	//	InvalidateRect(hwnd, NULL, true);
+	//	UpdateWindow(hwnd);
+	//	//char* dataPtr = (char*)pBuf;
+	//	//std::cout << "Oleg" << dataPtr[0] <<  std::endl;
+	//	return 0;
+	//}
 	switch (message) {
 	case WM_DESTROY: {
 		//Актуализация размеров окна
@@ -72,8 +72,8 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		return 0;
 	}
 	case WM_PAINT: {
-		//PAINTSTRUCT ps;
-		//HDC hdc = BeginPaint(hwnd, &ps);
+		PAINTSTRUCT ps;
+		HDC hdc = BeginPaint(hwnd, &ps);
 		/*
 		//GetClientRect(hwnd, &ps.rcPaint);
 
@@ -157,7 +157,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		//}
 
 		//SelectObject(hdc, tempPen);
-		//EndPaint(hwnd, &ps);
+		EndPaint(hwnd, &ps);
 		////DeleteObject(hBitmapImage);
 		break;
 	}
@@ -184,10 +184,9 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
 			}
 			MD.xElipse = MD.yElipse = -1;
-
 		}
 
-		SendMessage(HWND_BROADCAST, MD.WM_UPDATEDATA, NULL, NULL);
+		//SendMessage(HWND_BROADCAST, MD.WM_UPDATEDATA, NULL, NULL);
 		break;
 	}
 	case WM_HOTKEY: {
@@ -230,6 +229,13 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		RegisterHotKey(hwnd, HOTKEY__RETURN__CHANGE_COLOR, NULL, VK_RETURN);
 		RegisterHotKey(hwnd, HOTKEY__ESC__EXIT, MOD_NOREPEAT, VK_ESCAPE);
 		RegisterHotKey(hwnd, HOTKEY__CONTROL_Q__EXIT, MOD_CONTROL | MOD_NOREPEAT, 'Q');
+		break;
+	}
+	case WM_KEYDOWN:
+	{
+		if (wParam == VK_SPACE)
+			if (WaitForSingleObject(MD.stopSem, 50) == WAIT_TIMEOUT)
+				ReleaseSemaphore(MD.stopSem, 1, NULL);
 		break;
 	}
 	}
@@ -421,6 +427,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
+	MD.stopSem = CreateSemaphore(NULL, 1, 1, NULL);
 	MD.SemCanExit = CreateSemaphore(NULL, 1, 1, NULL);
 	MD.ptrThread = new std::thread(ThreadDraw, &MD);
 	MD.ptrThread->detach();
@@ -459,6 +466,8 @@ int main(int argc, char* argv[])
 
 	UnmapViewOfFile(MD.pBuf);
 	CloseHandle(MD.hMapFile);
+	CloseHandle(MD.SemCanExit);
+	CloseHandle(MD.stopSem);
 
 	UnregisterClass(MD.szWinClass, hThisInstance);
 

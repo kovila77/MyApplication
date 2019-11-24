@@ -8,7 +8,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
-
+#include <mutex>
 #include "Settings.h"
 
 #define COLOR_ELLIPS RGB(255, 0, 0)
