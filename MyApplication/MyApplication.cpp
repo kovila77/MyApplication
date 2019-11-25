@@ -53,6 +53,11 @@ void clearArea() {
 	MessageBoxA(MD.hwnd, "Cross`s turn", "Begining", MB_OK);
 }
 
+void SayWhoWinAndExit(const char* msg) {
+	MessageBoxA(MD.hwnd, msg, "THE END OF GAME!", MB_OK);
+	SendMessage(HWND_BROADCAST, MD.WM_EXIT, NULL, NULL);
+}
+
 void checkWin() {
 	bool winCW;
 	bool winCH;
@@ -72,13 +77,11 @@ void checkWin() {
 				winZW = false;
 		}
 		if (winCW) {
-			MessageBoxA(MD.hwnd, "Win Cross!!!", "THE END OF GAME!", MB_OK);
-			clearArea();
+			SayWhoWinAndExit("Win Cross!!!");
 			return;
 		}
 		if (winZW) {
-			MessageBoxA(MD.hwnd, "Win Zeros!!!", "THE END OF GAME!", MB_OK);
-			clearArea();
+			SayWhoWinAndExit("Win Zeros!!!");
 			return;
 		}
 	}
@@ -93,13 +96,11 @@ void checkWin() {
 				winZH = false;
 		}
 		if (winCH) {
-			MessageBoxA(MD.hwnd, "Win Cross!!!", "THE END OF GAME!", MB_OK);
-			clearArea();
+			SayWhoWinAndExit("Win Cross!!!");
 			return;
 		}
 		if (winZH) {
-			MessageBoxA(MD.hwnd, "Win Zeros!!!", "THE END OF GAME!", MB_OK);
-			clearArea();
+			SayWhoWinAndExit("Win Zeros!!!");
 			return;
 		}
 	}
@@ -113,12 +114,12 @@ void checkWin() {
 			winZD = false;
 	}
 	if (winCD) {
-		MessageBoxA(MD.hwnd, "Win Cross!!!", "THE END OF GAME!", MB_OK);
-		clearArea();
+		SayWhoWinAndExit("Win Cross!!!");
+		return;
 	}
 	if (winZD) {
-		MessageBoxA(MD.hwnd, "Win Zeros!!!", "THE END OF GAME!", MB_OK);
-		clearArea();
+		SayWhoWinAndExit("Win Zeros!!!");
+		return;
 	}
 
 	winCOD = true;
@@ -130,20 +131,24 @@ void checkWin() {
 			winZOD = false;
 	}
 	if (winCOD) {
-		MessageBoxA(MD.hwnd, "Win Cross!!!", "THE END OF GAME!", MB_OK);
-		clearArea();
+		SayWhoWinAndExit("Win Cross!!!");
+		return;
 	}
 	if (winZOD) {
-		MessageBoxA(MD.hwnd, "Win Zeros!!!", "THE END OF GAME!", MB_OK);
-		clearArea();
+		SayWhoWinAndExit("Win Zeros!!!");
+		return;
 	}
 }
 
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	if (message == MD.WM_EXIT) {
+		PostMessageW(MD.hwnd, WM_QUIT, 0, 0);
+	}
 	switch (message) {
 	case WM_DESTROY: {
 		if (MD.imACross) *MD.haveCross = false;
+		else *MD.haveZero = false;
 
 		MD.workThread = false;
 		ReleaseSemaphore(MD.stopSem, 1, NULL);
@@ -182,11 +187,17 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 			int j = (int)(MD.yElipse / stepY);
 			if (MD.ellHelp.haveEll[i][j]) break;
 			if (MD.imACross) {
-				if (*MD.lastWasCross) break;
+				if (*MD.lastWasCross) {
+					MessageBoxA(MD.hwnd, "Its Zeros turn!", "Not your turn!", MB_OK);
+					break;
+				}
 				*MD.lastWasCross = true;
 			}
 			else {
-				if (!(*MD.lastWasCross)) break;
+				if (!(*MD.lastWasCross)) {
+					MessageBoxA(MD.hwnd, "Its Crosss turn!", "Not your turn!", MB_OK);
+					break;
+				}
 				*MD.lastWasCross = false;
 			}
 
@@ -203,9 +214,11 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		}
 
 		checkWin();
-		if (*MD.countClick >= (MD.DataF.N + 1) * (MD.DataF.N + 1)) { 
-			*MD.countClick = 0;
-			clearArea();
+		if (*MD.countClick >= (MD.DataF.N + 1) * (MD.DataF.N + 1)) {			
+			MessageBoxA(MD.hwnd, "No one won.", "...", MB_OK);
+			SendMessage(HWND_BROADCAST, MD.WM_EXIT, NULL, NULL);
+			//*MD.countClick = 0;
+			//clearArea();
 		}
 		break;
 	}
@@ -375,9 +388,15 @@ int main(int argc, char* argv[])
 
 	ReadParam(&MD);
 
-	MD.WM_UPDATEDATA = RegisterWindowMessage((LPCWSTR)MD.NAME_MY_EVENT);
-	if (MD.WM_UPDATEDATA == 0) {
-		std::cout << "cant register window message" << std::endl; return 1;
+	MD.WM_EXIT = RegisterWindowMessage((LPCWSTR)MD.NAME_EXIT_EVENT);
+	if (MD.WM_EXIT == 0) {
+		for (int i = 0; i < MD.DataF.RCountIcon; i++) {
+			DeleteObject(MD.myImages[i].bm);
+		}
+		delete[] MD.myImages;
+		FreeDataF(&MD);
+		std::cout << "cant register window message" << std::endl; 
+		return 0;
 	}
 	MD.hMapFile = OpenFileMapping(
 		FILE_MAP_ALL_ACCESS,   // read/write access
@@ -391,13 +410,17 @@ int main(int argc, char* argv[])
 			NULL,                    // default security
 			PAGE_READWRITE,          // read/write access
 			0,                       // maximum object size (high-order DWORD)
-			((sizeof(bool)) * (MD.DataF.N + 1) * (MD.DataF.N + 1) + (sizeof(int)) * (MD.DataF.N + 1) * (MD.DataF.N + 1) + 2 * sizeof(bool) + sizeof(int)),                // maximum object size (low-order DWORD)
+			((sizeof(bool)) * (MD.DataF.N + 1) * (MD.DataF.N + 1) + (sizeof(int)) * (MD.DataF.N + 1) * (MD.DataF.N + 1) + 3 * sizeof(bool) + sizeof(int)),                // maximum object size (low-order DWORD)
 			MD.szName);                 // name of mapping object
 
 		if (MD.hMapFile == NULL)
 		{
 			_tprintf(TEXT("Could not create file mapping object (%d).\n"),
 				GetLastError());
+			for (int i = 0; i < MD.DataF.RCountIcon; i++) {
+				DeleteObject(MD.myImages[i].bm);
+			}
+			delete[] MD.myImages;
 			FreeDataF(&MD);
 			return 0;
 		}
@@ -406,12 +429,16 @@ int main(int argc, char* argv[])
 		FILE_MAP_ALL_ACCESS, // read/write permission
 		0,
 		0,
-		((sizeof(bool)) * (MD.DataF.N + 1) * (MD.DataF.N + 1) + (sizeof(int)) * (MD.DataF.N + 1) * (MD.DataF.N + 1) + 2 * sizeof(bool)) + sizeof(int));
+		((sizeof(bool)) * (MD.DataF.N + 1) * (MD.DataF.N + 1) + (sizeof(int)) * (MD.DataF.N + 1) * (MD.DataF.N + 1) + 3 * sizeof(bool)) + sizeof(int));
 	if (MD.pBuf == NULL)
 	{
 		_tprintf(TEXT("Could not map view of file (%d).\n"),
 			GetLastError());
 		CloseHandle(MD.hMapFile);
+		for (int i = 0; i < MD.DataF.RCountIcon; i++) {
+			DeleteObject(MD.myImages[i].bm);
+		}
+		delete[] MD.myImages;
 		FreeDataF(&MD);
 		return 0;
 	}
@@ -444,19 +471,43 @@ int main(int argc, char* argv[])
 	}
 	MD.haveCross = (bool*)tmp2;
 	MD.lastWasCross = MD.haveCross + 1;
-	MD.countClick = (int*)(MD.lastWasCross + 1);
+	MD.haveZero = MD.lastWasCross + 1;
+	MD.countClick = (int*)(MD.haveZero + 1);
 
-	if (MD.imFirst) { 
+	if (MD.imFirst) {
 		//*MD.countClick = 0;
-			//*MD.lastWasCross = false; 
-			clearArea();
-			RunCopyMyProgramm();
+		//*MD.lastWasCross = false; 
+		*MD.haveZero = false;
+		clearArea();
+		RunCopyMyProgramm();
 	}
 	if (MD.imACross) { *MD.haveCross = true; }
 	else
 		if (!(*MD.haveCross)) {
 			MD.imACross = true;
 			*MD.haveCross = true;
+		}
+		else {
+			if (!(*MD.haveZero)) {
+				*MD.haveZero = true;
+			}else{
+				MessageBoxA(MD.hwnd, "Too many copy of programm", "Close...", MB_OK);
+
+				for (int i = 0; i < MD.DataF.RCountIcon; i++) {
+					DeleteObject(MD.myImages[i].bm);
+				}
+				delete[] MD.myImages;
+				FreeDataF(&MD);
+
+				delete[]MD.ellHelp.haveEll;
+				delete[]MD.ellHelp.TypeEll;
+				DeleteObject(MD.hBrush);
+				DeleteObject(MD.hBrushEll);
+
+				UnmapViewOfFile(MD.pBuf);
+				CloseHandle(MD.hMapFile);
+				return 0;
+			}
 		}
 
 	//for (int i = 0; i < MD.DataF.N + 1; i++) {
@@ -478,20 +529,20 @@ int main(int argc, char* argv[])
 	if (!RegisterClassEx(&wincl))
 		return 0;
 	if (MD.imACross)
-	MD.hwnd = CreateWindowEx(
-		NULL,
-		MD.szWinClass,          /* Classname */
-		MD.szWinNameCross,       /* Title Text */
-		WS_OVERLAPPEDWINDOW, /* default window */
-		CW_USEDEFAULT,       /* Windows decides the position */
-		CW_USEDEFAULT,       /* where the window ends up on the screen */
-		MD.DataF.szXWNDCreated,                 /* The programs width */
-		MD.DataF.szYWNDCreated,                 /* and height in pixels */
-		HWND_DESKTOP,        /* The window is a child-window to desktop */
-		NULL,                /* No menu */
-		hThisInstance,       /* Program Instance handler */
-		NULL                 /* No Window Creation data */
-	);
+		MD.hwnd = CreateWindowEx(
+			NULL,
+			MD.szWinClass,          /* Classname */
+			MD.szWinNameCross,       /* Title Text */
+			WS_OVERLAPPEDWINDOW, /* default window */
+			CW_USEDEFAULT,       /* Windows decides the position */
+			CW_USEDEFAULT,       /* where the window ends up on the screen */
+			MD.DataF.szXWNDCreated,                 /* The programs width */
+			MD.DataF.szYWNDCreated,                 /* and height in pixels */
+			HWND_DESKTOP,        /* The window is a child-window to desktop */
+			NULL,                /* No menu */
+			hThisInstance,       /* Program Instance handler */
+			NULL                 /* No Window Creation data */
+		);
 	else MD.hwnd = CreateWindowEx(
 		NULL,
 		MD.szWinClass,          /* Classname */
@@ -518,7 +569,7 @@ int main(int argc, char* argv[])
 
 	ShowWindow(MD.hwnd, SW_SHOW);
 	//SetTimer(hwnd, NULL, TIMER_INTERVAL, (TIMERPROC)SendMessage_WM_TIMER);
-	SendMessage(HWND_BROADCAST, MD.WM_UPDATEDATA, NULL, NULL);
+	//SendMessage(HWND_BROADCAST, MD.WM_EXIT, NULL, NULL);
 	while ((bMessageOk = GetMessage(&message, NULL, 0, 0)) != 0) {
 		if (bMessageOk == -1) {
 			puts("Suddenly, GetMessage failed! You can call GetLastError() to see what happend");

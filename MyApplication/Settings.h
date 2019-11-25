@@ -24,11 +24,13 @@ struct MAIN_DATA_STRUCT
 {
 	bool imFirst = false;
 	bool* haveCross;
+	bool* haveZero;
 	bool imACross = false;
 	bool* lastWasCross;
 
 	const char* NAME_MY_DLL = "WWI.dll";
-	const char* NAME_MY_EVENT = "WM_UPDATEDATA";
+	const char* NAME_EXIT_EVENT = "WM_UPDATEDATA";
+	//const char* NAME_MY_EVENT = "WM_UPDATEDATA";
 
 	bool workThread = true;
 	HANDLE SemCanExit;
@@ -46,7 +48,8 @@ struct MAIN_DATA_STRUCT
 	HBRUSH hBrushEll;
 	int xElipse = -1;
 	int yElipse = -1;
-	int WM_UPDATEDATA = 0;
+	//int WM_UPDATEDATA = 0;
+	int WM_EXIT = 0;
 	int* countClick;
 
 	HANDLE hMapFile;

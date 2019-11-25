@@ -93,6 +93,7 @@ bool ReadParamWinAPI(MAIN_DATA_STRUCT* MD) {
 
 	if (!ReadFile(hFile, buff, dwFileSize, NULL, NULL)) {
 		std::cout << "ReadFile error" << std::endl;
+		delete[]buff;
 		CloseHandle(hFile);
 		return false;
 	}
