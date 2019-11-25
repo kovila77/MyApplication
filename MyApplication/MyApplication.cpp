@@ -264,6 +264,11 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		RegisterHotKey(hwnd, HOTKEY__CONTROL_Q__EXIT, MOD_CONTROL | MOD_NOREPEAT, 'Q');
 		break;
 	}
+	/*case WM_TIMER:
+	{
+		std::cout << "notT";
+		return 0;
+	}*/
 	case WM_KEYDOWN:
 	{
 		switch (wParam)

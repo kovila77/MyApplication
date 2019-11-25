@@ -45,14 +45,14 @@ void loadImage1(MAIN_DATA_STRUCT* MD) {
 	FreeLibrary(hLib);
 }
 
-void Timer() {
+void CALLBACK Timer(HWND Arg1, UINT Arg2, UINT_PTR Arg3, DWORD Arg4) {
 	ReleaseSemaphore(semFPS, 1, NULL);
 	//std::cout << "w";
 }
 
 void ThreadDraw(MAIN_DATA_STRUCT* MD) {
 	loadImage1(MD);
-	UINT_PTR timer = SetTimer(MD->hwnd, NULL, 1000/FPS, (TIMERPROC)Timer);
+	UINT_PTR timer = SetTimer(MD->hwnd, NULL, 1000 / FPS, (TIMERPROC)&Timer);
 	semFPS = CreateSemaphore(NULL, 1, 1, NULL);
 	WaitForSingleObject(semFPS, 1);
 
@@ -205,6 +205,6 @@ void ThreadDraw(MAIN_DATA_STRUCT* MD) {
 	}
 	// При уничтожении окна таймер уничтожается
 	//KillTimer(MD->hwnd, timer);
-	delete[] myAnim; 
+	delete[] myAnim;
 	CloseHandle(semFPS);
 }
