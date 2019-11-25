@@ -1,6 +1,9 @@
 #include "MyApplication.h"
 #include <string>
 
+#define FPS 25
+#define TIME_OUT_SEMFPS 1000
+
 std::string NAME_ANIM_PRE = "Animation\\k1 (";
 std::string NAME_ANIM_AFT = ").png";
 
@@ -9,6 +12,7 @@ const int maxCountAnim = 90;
 int countAnim = 0;
 bool stillwork = true;
 img* myAnim;
+HANDLE semFPS;
 
 void loadImage1(MAIN_DATA_STRUCT* MD) {
 	HMODULE hLib;
@@ -41,8 +45,16 @@ void loadImage1(MAIN_DATA_STRUCT* MD) {
 	FreeLibrary(hLib);
 }
 
+void Timer() {
+	ReleaseSemaphore(semFPS, 1, NULL);
+	//std::cout << "w";
+}
+
 void ThreadDraw(MAIN_DATA_STRUCT* MD) {
 	loadImage1(MD);
+	UINT_PTR timer = SetTimer(MD->hwnd, NULL, 1000/FPS, (TIMERPROC)Timer);
+	semFPS = CreateSemaphore(NULL, 1, 1, NULL);
+	WaitForSingleObject(semFPS, 1);
 
 	while (MD->workThread)
 	{
@@ -185,10 +197,14 @@ void ThreadDraw(MAIN_DATA_STRUCT* MD) {
 
 		SelectObject(hdc, tempPen);
 		//EndPaint(MD->hwnd, &ps);
+		WaitForSingleObject(semFPS, TIME_OUT_SEMFPS);
 		ReleaseDC(MD->hwnd, hdc);
 
 		DeleteDC(hdcTemp2);
-		Sleep(40);
+		//Sleep(40);
 	}
-	delete[] myAnim;
+	// При уничтожении окна таймер уничтожается
+	//KillTimer(MD->hwnd, timer);
+	delete[] myAnim; 
+	CloseHandle(semFPS);
 }
