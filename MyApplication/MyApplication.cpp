@@ -55,7 +55,8 @@ void clearArea() {
 
 void SayWhoWinAndExit(const char* msg) {
 	MessageBoxA(MD.hwnd, msg, "THE END OF GAME!", MB_OK);
-	SendMessage(HWND_BROADCAST, MD.WM_EXIT, NULL, NULL);
+	//DialogBoxA()
+	//SendMessage(HWND_BROADCAST, MD.WM_EXIT, NULL, NULL);
 }
 
 void checkWin() {
@@ -77,11 +78,13 @@ void checkWin() {
 				winZW = false;
 		}
 		if (winCW) {
-			SayWhoWinAndExit("Win Cross!!!");
+			//SayWhoWinAndExit("Win Cross!!!");
+			PostMessage(HWND_BROADCAST, MD.WM_EXIT, 'c', NULL);
 			return;
 		}
 		if (winZW) {
-			SayWhoWinAndExit("Win Zeros!!!");
+			//SayWhoWinAndExit("Win Zeros!!!");
+			PostMessage(HWND_BROADCAST, MD.WM_EXIT, 'z', NULL);
 			return;
 		}
 	}
@@ -96,11 +99,13 @@ void checkWin() {
 				winZH = false;
 		}
 		if (winCH) {
-			SayWhoWinAndExit("Win Cross!!!");
+			//SayWhoWinAndExit("Win Cross!!!");
+			PostMessage(HWND_BROADCAST, MD.WM_EXIT, 'c', NULL);
 			return;
 		}
 		if (winZH) {
-			SayWhoWinAndExit("Win Zeros!!!");
+			//SayWhoWinAndExit("Win Zeros!!!");
+			PostMessage(HWND_BROADCAST, MD.WM_EXIT, 'z', NULL);
 			return;
 		}
 	}
@@ -114,11 +119,13 @@ void checkWin() {
 			winZD = false;
 	}
 	if (winCD) {
-		SayWhoWinAndExit("Win Cross!!!");
+		//SayWhoWinAndExit("Win Cross!!!");
+		PostMessage(HWND_BROADCAST, MD.WM_EXIT, 'c', NULL);
 		return;
 	}
 	if (winZD) {
-		SayWhoWinAndExit("Win Zeros!!!");
+		//SayWhoWinAndExit("Win Zeros!!!");
+		PostMessage(HWND_BROADCAST, MD.WM_EXIT, 'z', NULL);
 		return;
 	}
 
@@ -131,11 +138,13 @@ void checkWin() {
 			winZOD = false;
 	}
 	if (winCOD) {
-		SayWhoWinAndExit("Win Cross!!!");
+		//SayWhoWinAndExit("Win Cross!!!");
+		PostMessage(HWND_BROADCAST, MD.WM_EXIT, 'c', NULL);
 		return;
 	}
 	if (winZOD) {
-		SayWhoWinAndExit("Win Zeros!!!");
+		//SayWhoWinAndExit("Win Zeros!!!");
+		PostMessage(HWND_BROADCAST, MD.WM_EXIT, 'z', NULL);
 		return;
 	}
 }
@@ -143,6 +152,19 @@ void checkWin() {
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	if (message == MD.WM_EXIT) {
+		if (wParam != 'n')
+			if (wParam == 'c')
+				if (MD.imACross)
+					SayWhoWinAndExit("You win!!! (Cross win)");
+				else
+					SayWhoWinAndExit("You lose... (Cross win)");
+			else
+				if (MD.imACross)
+					SayWhoWinAndExit("You lose... (Zeros win)");
+				else
+					SayWhoWinAndExit("You win!!! (Zeros win)");
+		else
+			MessageBoxA(MD.hwnd, "No one won.", "...", MB_OK);
 		PostMessageW(MD.hwnd, WM_QUIT, 0, 0);
 	}
 	switch (message) {
@@ -214,9 +236,9 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		}
 
 		checkWin();
-		if (*MD.countClick >= (MD.DataF.N + 1) * (MD.DataF.N + 1)) {			
-			MessageBoxA(MD.hwnd, "No one won.", "...", MB_OK);
-			SendMessage(HWND_BROADCAST, MD.WM_EXIT, NULL, NULL);
+		if (*MD.countClick >= (MD.DataF.N + 1) * (MD.DataF.N + 1)) {
+			//MessageBoxA(MD.hwnd, "No one won.", "...", MB_OK);
+			PostMessage(HWND_BROADCAST, MD.WM_EXIT, 'n', NULL);
 			//*MD.countClick = 0;
 			//clearArea();
 		}
@@ -264,11 +286,11 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		RegisterHotKey(hwnd, HOTKEY__CONTROL_Q__EXIT, MOD_CONTROL | MOD_NOREPEAT, 'Q');
 		break;
 	}
-	/*case WM_TIMER:
-	{
-		std::cout << "notT";
-		return 0;
-	}*/
+					/*case WM_TIMER:
+					{
+						std::cout << "notT";
+						return 0;
+					}*/
 	case WM_KEYDOWN:
 	{
 		switch (wParam)
@@ -400,7 +422,7 @@ int main(int argc, char* argv[])
 		}
 		delete[] MD.myImages;
 		FreeDataF(&MD);
-		std::cout << "cant register window message" << std::endl; 
+		std::cout << "cant register window message" << std::endl;
 		return 0;
 	}
 	MD.hMapFile = OpenFileMapping(
@@ -495,7 +517,8 @@ int main(int argc, char* argv[])
 		else {
 			if (!(*MD.haveZero)) {
 				*MD.haveZero = true;
-			}else{
+			}
+			else {
 				MessageBoxA(MD.hwnd, "Too many copy of programm", "Close...", MB_OK);
 
 				for (int i = 0; i < MD.DataF.RCountIcon; i++) {

@@ -46,6 +46,7 @@ void loadImage1(MAIN_DATA_STRUCT* MD) {
 }
 
 void CALLBACK Timer(HWND Arg1, UINT Arg2, UINT_PTR Arg3, DWORD Arg4) {
+	//std::cout << "you can go" << std::endl;
 	ReleaseSemaphore(semFPS, 1, NULL);
 	//std::cout << "w";
 }
@@ -197,7 +198,9 @@ void ThreadDraw(MAIN_DATA_STRUCT* MD) {
 
 		SelectObject(hdc, tempPen);
 		//EndPaint(MD->hwnd, &ps);
+		//std::cout << "wait" << std::endl;
 		WaitForSingleObject(semFPS, TIME_OUT_SEMFPS);
+		//std::cout << "doing..." << std::endl << std::endl;
 		ReleaseDC(MD->hwnd, hdc);
 
 		DeleteDC(hdcTemp2);
